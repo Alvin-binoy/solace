@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
+import 'core/di/injection.dart';
+import 'core/router/app_router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  configureDependencies();
   runApp(const SolaceApp());
 }
 
@@ -11,17 +14,13 @@ class SolaceApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Solace',
-      debugShowCheckedModeBanner: false, // Removes the red debug banner
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system, // Automatically adapts to user's phone setting
-      home: const Scaffold(
-        body: Center(
-          child: Text('Solace App Ready!'),
-        ),
-      ),
+      themeMode: ThemeMode.system,
+      routerConfig: appRouter, // The router is entirely in charge now
     );
   }
 }
