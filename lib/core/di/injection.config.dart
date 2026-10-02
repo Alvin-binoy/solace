@@ -67,17 +67,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i558.AuthRepository>(
       () => _i37.AuthRepositoryImpl(gh<_i571.SecureStorageDatasource>()),
     );
-    gh.factory<_i413.SetupPinUseCase>(
-      () => _i413.SetupPinUseCase(gh<_i558.AuthRepository>()),
-    );
-    gh.factory<_i834.VerifyPinUseCase>(
-      () => _i834.VerifyPinUseCase(gh<_i558.AuthRepository>()),
-    );
     gh.factory<_i888.CheckAuthStatusUseCase>(
       () => _i888.CheckAuthStatusUseCase(gh<_i558.AuthRepository>()),
     );
     gh.factory<_i176.ClearPinUseCase>(
       () => _i176.ClearPinUseCase(gh<_i558.AuthRepository>()),
+    );
+    gh.factory<_i413.SetupPinUseCase>(
+      () => _i413.SetupPinUseCase(gh<_i558.AuthRepository>()),
+    );
+    gh.factory<_i834.VerifyPinUseCase>(
+      () => _i834.VerifyPinUseCase(gh<_i558.AuthRepository>()),
     );
     gh.factory<_i294.TaskRepository>(
       () => _i690.TaskRepositoryImpl(gh<_i493.TaskLocalDatasource>()),
@@ -100,6 +100,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i834.VerifyPinUseCase>(),
         gh<_i888.CheckAuthStatusUseCase>(),
         gh<_i176.ClearPinUseCase>(),
+        gh<_i558.AuthRepository>(),
       ),
     );
     gh.factory<_i154.TaskBloc>(

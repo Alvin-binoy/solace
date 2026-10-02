@@ -45,14 +45,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   Future<void> _onAddTask(AddTaskEvent event, Emitter<TaskState> emit) async {
-    final result = await _addTask(event.task);
-    if (result.isLeft()) {
-      // If adding fails, we briefly emit an error state
-      final failure = result.fold((l) => l, (r) => null)!;
-      // We don't overwrite the whole state here permanently,
-      // but in a more advanced setup we might emit a side-effect.
-      // For now, let's just log it or rely on the stream.
-    }
+    await _addTask(event.task);
   }
 
   Future<void> _onUpdateTask(UpdateTaskEvent event, Emitter<TaskState> emit) async {

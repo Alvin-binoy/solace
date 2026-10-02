@@ -6,11 +6,14 @@ import 'package:path/path.dart' as p;
 import 'dart:io';
 
 import '../../features/tasks/data/models/task_table.dart';
-
+import '../../features/auth/data/models/user_profile_table.dart';
+import '../enums/task_priority.dart';
+import '../enums/task_category.dart';
+import '../enums/task_status.dart';
 part 'app_database.g.dart';
 
 @LazySingleton()
-@DriftDatabase(tables: [Tasks])
+@DriftDatabase(tables: [Tasks, UserProfiles])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

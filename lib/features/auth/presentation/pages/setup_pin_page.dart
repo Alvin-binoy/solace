@@ -85,7 +85,7 @@ class _SetupPinViewState extends State<_SetupPinView> {
                         shape: BoxShape.circle,
                         color: index < _pin.length
                             ? Theme.of(context).colorScheme.primary
-                            : Colors.grey.withOpacity(0.3),
+                            : Colors.grey.withValues(alpha: 0.3),
                       ),
                     );
                   }),

@@ -35,7 +35,7 @@ class PinPad extends StatelessWidget {
     return TextButton(
       style: TextButton.styleFrom(
         shape: const CircleBorder(),
-        foregroundColor: Theme.of(context).colorScheme.onBackground,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
       ),
       onPressed: () => onNumberTapped(number),
       child: Text(

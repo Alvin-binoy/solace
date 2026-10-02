@@ -4,7 +4,5 @@ import 'package:injectable/injectable.dart';
 @module
 abstract class ExternalModule {
   @singleton
-  FlutterSecureStorage get secureStorage => const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  FlutterSecureStorage get secureStorage => const FlutterSecureStorage();
 }

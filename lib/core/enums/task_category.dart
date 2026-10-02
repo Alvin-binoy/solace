@@ -1,0 +1,1 @@
+enum TaskCategory { work, personal, health, study, other }

@@ -18,9 +18,18 @@ class TaskRepositoryImpl implements TaskRepository {
     return TaskEntity(
       id: model.id,
       title: model.title,
-      description: model.description,
-      isCompleted: model.isCompleted,
+      description: model.description ?? '',
+      priority: model.priority,
+      category: model.category,
+      status: model.status,
+      deadline: model.deadline,
+      scheduledAt: model.scheduledAt,
+      isRecurring: model.isRecurring,
+      recurrenceRule: model.recurrenceRule,
+      parentTaskId: model.parentTaskId,
+      reminderLeadMinutes: model.reminderLeadMinutes,
       createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
     );
   }
 
@@ -28,9 +37,18 @@ class TaskRepositoryImpl implements TaskRepository {
     return Task(
       id: entity.id,
       title: entity.title,
-      description: entity.description,
-      isCompleted: entity.isCompleted,
+      description: entity.description.isEmpty ? null : entity.description,
+      priority: entity.priority,
+      category: entity.category,
+      status: entity.status,
+      deadline: entity.deadline,
+      scheduledAt: entity.scheduledAt,
+      isRecurring: entity.isRecurring,
+      recurrenceRule: entity.recurrenceRule,
+      parentTaskId: entity.parentTaskId,
+      reminderLeadMinutes: entity.reminderLeadMinutes,
       createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
     );
   }
 
@@ -39,7 +57,7 @@ class TaskRepositoryImpl implements TaskRepository {
     return _datasource.watchAllTasks().map(
           (models) => Right<Failure, List<TaskEntity>>(models.map(_toEntity).toList()),
     ).handleError((error) {
-      return Left<Failure, List<TaskEntity>>(const DatabaseFailure('Failed to load tasks'));
+      return const Left<Failure, List<TaskEntity>>(DatabaseFailure('Failed to load tasks'));
     });
   }
 

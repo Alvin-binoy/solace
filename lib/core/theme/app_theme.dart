@@ -9,7 +9,6 @@ abstract class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.light,
-        background: AppColors.backgroundLight,
         surface: AppColors.surfaceLight,
         error: AppColors.error,
       ),
@@ -29,7 +28,6 @@ abstract class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
-        background: AppColors.backgroundDark,
         surface: AppColors.surfaceDark,
         error: AppColors.error,
       ),

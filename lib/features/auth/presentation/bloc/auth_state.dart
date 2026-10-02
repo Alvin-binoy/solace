@@ -24,4 +24,11 @@ class AuthError extends AuthState {
   List<Object> get props => [message];
 }
 
+class AuthLockoutState extends AuthState {
+  final int remainingSeconds;
+  const AuthLockoutState(this.remainingSeconds);
+  @override
+  List<Object> get props => [remainingSeconds];
+}
+
 class AuthPinCleared extends AuthState {}

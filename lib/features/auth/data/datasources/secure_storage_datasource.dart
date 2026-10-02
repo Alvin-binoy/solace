@@ -10,17 +10,23 @@ abstract class SecureStorageDatasource {
   Future<bool> verifyPin(String pin);
   Future<bool> hasPin();
   Future<void> deletePin();
+  Future<int> getFailedAttempts();
+  Future<void> incrementFailedAttempts();
+  Future<void> resetFailedAttempts();
+  Future<int> getLockoutRemainingSeconds();
+  Future<void> setLockout(int seconds);
 }
 
 @LazySingleton(as: SecureStorageDatasource)
 class SecureStorageDatasourceImpl implements SecureStorageDatasource {
   final FlutterSecureStorage _storage;
   static const _pinKey = 'solace_pin_hash';
+  static const _failedAttemptsKey = 'solace_failed_attempts';
+  static const _lockoutUntilKey = 'solace_lockout_until';
 
   SecureStorageDatasourceImpl(this._storage);
 
   String _hashPin(String pin) {
-    // Scrambles the PIN into an unrecognizable string (SHA-256)
     final bytes = utf8.encode(pin);
     return sha256.convert(bytes).toString();
   }
@@ -30,6 +36,7 @@ class SecureStorageDatasourceImpl implements SecureStorageDatasource {
     try {
       final hash = _hashPin(pin);
       await _storage.write(key: _pinKey, value: hash);
+      await resetFailedAttempts();
     } catch (e) {
       throw const SecureStorageException('Failed to save PIN securely.');
     }
@@ -42,7 +49,15 @@ class SecureStorageDatasourceImpl implements SecureStorageDatasource {
       if (storedHash == null) return false;
 
       final inputHash = _hashPin(pin);
-      return storedHash == inputHash;
+      final isCorrect = storedHash == inputHash;
+
+      if (isCorrect) {
+        await resetFailedAttempts();
+      } else {
+        await incrementFailedAttempts();
+      }
+
+      return isCorrect;
     } catch (e) {
       throw const SecureStorageException('Failed to verify PIN.');
     }
@@ -62,8 +77,67 @@ class SecureStorageDatasourceImpl implements SecureStorageDatasource {
   Future<void> deletePin() async {
     try {
       await _storage.delete(key: _pinKey);
+      await resetFailedAttempts();
     } catch (e) {
       throw const SecureStorageException('Failed to delete PIN.');
+    }
+  }
+
+  @override
+  Future<int> getFailedAttempts() async {
+    try {
+      final val = await _storage.read(key: _failedAttemptsKey);
+      return val != null ? int.tryParse(val) ?? 0 : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  @override
+  Future<void> incrementFailedAttempts() async {
+    try {
+      final current = await getFailedAttempts();
+      final updated = current + 1;
+      await _storage.write(key: _failedAttemptsKey, value: updated.toString());
+      if (updated >= 5) {
+        await setLockout(30);
+      }
+    } catch (e) {
+      // Ignore secure storage write error for attempts counter
+    }
+  }
+
+  @override
+  Future<void> resetFailedAttempts() async {
+    try {
+      await _storage.delete(key: _failedAttemptsKey);
+      await _storage.delete(key: _lockoutUntilKey);
+    } catch (e) {
+      // Ignore cleanup error
+    }
+  }
+
+  @override
+  Future<int> getLockoutRemainingSeconds() async {
+    try {
+      final val = await _storage.read(key: _lockoutUntilKey);
+      if (val == null) return 0;
+      final lockoutUntil = int.tryParse(val) ?? 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final remaining = ((lockoutUntil - now) / 1000).ceil();
+      return remaining > 0 ? remaining : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  @override
+  Future<void> setLockout(int seconds) async {
+    try {
+      final lockoutUntil = DateTime.now().millisecondsSinceEpoch + (seconds * 1000);
+      await _storage.write(key: _lockoutUntilKey, value: lockoutUntil.toString());
+    } catch (e) {
+      // Ignore write error
     }
   }
 }
