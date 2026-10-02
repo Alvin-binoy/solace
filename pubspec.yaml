@@ -40,7 +40,7 @@ dependencies:
   # Database & Encryption
   drift: any
   sqlite3_flutter_libs: any
-  sqlcipher_flutter_libs: any
+#  sqlcipher_flutter_libs: any
   flutter_secure_storage: any
 
   # Dependency Injection
@@ -54,6 +54,8 @@ dependencies:
   reactive_forms: any
   omni_datetime_picker: any
   intl: any
+  flutter_inappwebview: ^6.1.5 # <-- Update this line right here
+
 
   # Utilities & Functional Programming
   fpdart: any
@@ -61,12 +63,12 @@ dependencies:
   path_provider: any
 
   # Platform & Background Tasks
-  local_auth: any
-  workmanager: any
-  flutter_local_notifications: any
+  local_auth: ^2.3.0
+  workmanager: ^0.9.2
+  flutter_local_notifications: ^17.2.4
   rrule: any
-  permission_handler: any
-  connectivity_plus: any
+  permission_handler: ^11.3.1 # <-- Downgrade to v11 for clean compatibility
+  connectivity_plus: ^6.0.5   # <-- Downgrade to v6 for clean compatibility
 
   # Backup & Export
   archive: any
