@@ -14,6 +14,7 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:solace/core/database/app_database.dart' as _i844;
 import 'package:solace/core/di/external_module.dart' as _i951;
+import 'package:solace/core/services/overdue_checker_service.dart' as _i546;
 import 'package:solace/features/auth/data/datasources/secure_storage_datasource.dart'
     as _i571;
 import 'package:solace/features/auth/data/repositories/auth_repository_impl.dart'
@@ -81,6 +82,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i294.TaskRepository>(
       () => _i690.TaskRepositoryImpl(gh<_i493.TaskLocalDatasource>()),
+    );
+    gh.lazySingleton<_i546.OverdueCheckerService>(
+      () => _i546.OverdueCheckerService(gh<_i294.TaskRepository>()),
     );
     gh.factory<_i635.AddTaskUseCase>(
       () => _i635.AddTaskUseCase(gh<_i294.TaskRepository>()),

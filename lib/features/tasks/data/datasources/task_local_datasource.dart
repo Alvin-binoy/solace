@@ -1,15 +1,17 @@
+import 'package:drift/drift.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/enums/task_status.dart';
 
-// 1. The "Menu" - just lists what this file can do
 abstract class TaskLocalDatasource {
   Stream<List<Task>> watchAllTasks();
   Future<void> insertTask(TasksCompanion companion);
   Future<void> updateTask(TasksCompanion companion);
   Future<void> deleteTask(String id);
+  // NEW: Method to find and mark overdue tasks
+  Future<void> markOverdueTasks();
 }
 
-// 2. The "Kitchen" - actually does the work
 @LazySingleton(as: TaskLocalDatasource)
 class TaskLocalDatasourceImpl implements TaskLocalDatasource {
   final AppDatabase _db;
@@ -34,5 +36,21 @@ class TaskLocalDatasourceImpl implements TaskLocalDatasource {
   @override
   Future<void> deleteTask(String id) {
     return (_db.delete(_db.tasks)..where((t) => t.id.equals(id))).go();
+  }
+
+  // NEW: The actual database command that updates everything instantly
+  @override
+  Future<void> markOverdueTasks() async {
+    final now = DateTime.now();
+
+    await (_db.update(_db.tasks)
+      ..where((t) => t.deadline.isSmallerThanValue(now))
+      ..where((t) => t.status.equals(TaskStatus.pending.name)))
+        .write(
+      TasksCompanion(
+        status: const Value(TaskStatus.overdue),
+        updatedAt: Value(now),
+      ),
+    );
   }
 }

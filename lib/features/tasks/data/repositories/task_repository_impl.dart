@@ -64,7 +64,6 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Either<Failure, void>> addTask(TaskEntity task) async {
     try {
-      // Changed _toModel to _toCompanion
       await _datasource.insertTask(_toCompanion(task));
       return const Right(null);
     } catch (e) {
@@ -75,7 +74,6 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Either<Failure, void>> updateTask(TaskEntity task) async {
     try {
-      // Changed _toModel to _toCompanion
       await _datasource.updateTask(_toCompanion(task));
       return const Right(null);
     } catch (e) {
@@ -90,6 +88,17 @@ class TaskRepositoryImpl implements TaskRepository {
       return const Right(null);
     } catch (e) {
       return const Left(DatabaseFailure('Failed to delete task'));
+    }
+  }
+
+  // NEW: Tell the datasource to actually run the overdue check
+  @override
+  Future<Either<Failure, void>> markOverdueTasks() async {
+    try {
+      await _datasource.markOverdueTasks();
+      return const Right(null);
+    } catch (e) {
+      return const Left(DatabaseFailure('Failed to mark overdue tasks'));
     }
   }
 }

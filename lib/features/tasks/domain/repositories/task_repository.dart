@@ -9,4 +9,7 @@ abstract class TaskRepository {
   Future<Either<Failure, void>> addTask(TaskEntity task);
   Future<Either<Failure, void>> updateTask(TaskEntity task);
   Future<Either<Failure, void>> deleteTask(String id);
+
+  // NEW: Method to trigger the overdue check
+  Future<Either<Failure, void>> markOverdueTasks();
 }
