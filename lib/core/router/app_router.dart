@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/setup_pin_page.dart';
 import '../../features/auth/presentation/pages/lock_screen_page.dart';
@@ -26,8 +27,6 @@ final GoRouter appRouter = GoRouter(
       path: RouteNames.lock,
       builder: (context, state) => const LockScreenPage(),
     ),
-
-    // Bottom Navigation Shell
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
       routes: [
@@ -53,8 +52,6 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
-
-    // Subroutes pushed on top of shell
     GoRoute(
       path: RouteNames.taskCreate,
       builder: (context, state) => const CreateEditTaskPage(),

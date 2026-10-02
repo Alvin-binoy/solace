@@ -1,6 +1,6 @@
 import 'package:fpdart/fpdart.dart' hide Task;
 import 'package:injectable/injectable.dart';
-
+import 'package:drift/drift.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/database/app_database.dart'; // Gives us the Drift 'Task' model
 import '../../domain/entities/task_entity.dart';
@@ -33,22 +33,22 @@ class TaskRepositoryImpl implements TaskRepository {
     );
   }
 
-  Task _toModel(TaskEntity entity) {
-    return Task(
-      id: entity.id,
-      title: entity.title,
-      description: entity.description.isEmpty ? null : entity.description,
-      priority: entity.priority,
-      category: entity.category,
-      status: entity.status,
-      deadline: entity.deadline,
-      scheduledAt: entity.scheduledAt,
-      isRecurring: entity.isRecurring,
-      recurrenceRule: entity.recurrenceRule,
-      parentTaskId: entity.parentTaskId,
-      reminderLeadMinutes: entity.reminderLeadMinutes,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
+  TasksCompanion _toCompanion(TaskEntity entity) {
+    return TasksCompanion(
+      id: Value(entity.id),
+      title: Value(entity.title),
+      description: Value(entity.description.isEmpty ? null : entity.description),
+      priority: Value(entity.priority),
+      category: Value(entity.category),
+      status: Value(entity.status),
+      deadline: Value(entity.deadline),
+      scheduledAt: Value(entity.scheduledAt),
+      isRecurring: Value(entity.isRecurring),
+      recurrenceRule: Value(entity.recurrenceRule),
+      parentTaskId: Value(entity.parentTaskId),
+      reminderLeadMinutes: Value(entity.reminderLeadMinutes),
+      createdAt: Value(entity.createdAt),
+      updatedAt: Value(entity.updatedAt),
     );
   }
 
@@ -64,7 +64,8 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Either<Failure, void>> addTask(TaskEntity task) async {
     try {
-      await _datasource.insertTask(_toModel(task));
+      // Changed _toModel to _toCompanion
+      await _datasource.insertTask(_toCompanion(task));
       return const Right(null);
     } catch (e) {
       return const Left(DatabaseFailure('Failed to add task'));
@@ -74,7 +75,8 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Either<Failure, void>> updateTask(TaskEntity task) async {
     try {
-      await _datasource.updateTask(_toModel(task));
+      // Changed _toModel to _toCompanion
+      await _datasource.updateTask(_toCompanion(task));
       return const Right(null);
     } catch (e) {
       return const Left(DatabaseFailure('Failed to update task'));

@@ -1,13 +1,15 @@
 import 'package:injectable/injectable.dart';
 import '../../../../core/database/app_database.dart';
 
+// 1. The "Menu" - just lists what this file can do
 abstract class TaskLocalDatasource {
   Stream<List<Task>> watchAllTasks();
-  Future<void> insertTask(Task task);
-  Future<void> updateTask(Task task);
+  Future<void> insertTask(TasksCompanion companion);
+  Future<void> updateTask(TasksCompanion companion);
   Future<void> deleteTask(String id);
 }
 
+// 2. The "Kitchen" - actually does the work
 @LazySingleton(as: TaskLocalDatasource)
 class TaskLocalDatasourceImpl implements TaskLocalDatasource {
   final AppDatabase _db;
@@ -16,18 +18,17 @@ class TaskLocalDatasourceImpl implements TaskLocalDatasource {
 
   @override
   Stream<List<Task>> watchAllTasks() {
-    // Watches the table and emits a new list instantly whenever data changes!
     return _db.select(_db.tasks).watch();
   }
 
   @override
-  Future<void> insertTask(Task task) {
-    return _db.into(_db.tasks).insert(task);
+  Future<void> insertTask(TasksCompanion companion) {
+    return _db.into(_db.tasks).insert(companion);
   }
 
   @override
-  Future<void> updateTask(Task task) {
-    return _db.update(_db.tasks).replace(task);
+  Future<void> updateTask(TasksCompanion companion) {
+    return _db.update(_db.tasks).replace(companion);
   }
 
   @override

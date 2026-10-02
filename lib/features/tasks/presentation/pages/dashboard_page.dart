@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/enums/task_status.dart';
@@ -11,18 +10,6 @@ import '../bloc/task_state.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => GetIt.I<TaskBloc>()..add(WatchTasksEvent()),
-      child: const _DashboardView(),
-    );
-  }
-}
-
-class _DashboardView extends StatelessWidget {
-  const _DashboardView();
 
   @override
   Widget build(BuildContext context) {
@@ -62,8 +49,9 @@ class _DashboardView extends StatelessWidget {
                   title: Text(
                     task.title,
                     style: TextStyle(
-                      decoration:
-                          task.status == TaskStatus.completed ? TextDecoration.lineThrough : null,
+                      decoration: task.status == TaskStatus.completed
+                          ? TextDecoration.lineThrough
+                          : null,
                       color: task.status == TaskStatus.completed ? Colors.grey : null,
                     ),
                   ),
