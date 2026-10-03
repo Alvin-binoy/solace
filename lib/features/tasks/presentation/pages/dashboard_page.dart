@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../main.dart';
 import '../widgets/task_input_bottom_sheet.dart';
 import '../../../../core/enums/task_status.dart';
 import '../../../../core/router/route_names.dart';
@@ -16,8 +17,24 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Dashboard'),
+        title: const Text('DASHBOARD'),
         automaticallyImplyLeading: false,
+        actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeNotifier,
+            builder: (context, currentMode, _) {
+              final isDark = currentMode == ThemeMode.dark;
+              return IconButton(
+                icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                tooltip: 'Toggle Theme',
+                onPressed: () {
+                  themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
+                },
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: BlocBuilder<TaskBloc, TaskState>(
         builder: (context, state) {
@@ -29,28 +46,27 @@ class DashboardPage extends StatelessWidget {
             );
           } else if (state is TaskLoaded) {
 
-            // 1. Calculate our stats from the real-time tasks list
             final pending = state.tasks.where((t) => t.status == TaskStatus.pending).length;
             final completed = state.tasks.where((t) => t.status == TaskStatus.completed).length;
             final overdue = state.tasks.where((t) => t.status == TaskStatus.overdue).length;
 
             return Column(
               children: [
-                // 2. The Summary Stats Row
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _StatCard(title: 'Pending', count: pending, color: Colors.orange),
-                      _StatCard(title: 'Overdue', count: overdue, color: Colors.red),
-                      _StatCard(title: 'Done', count: completed, color: Colors.green),
+                      // Removed topLabel arguments
+                      _StatCard(title: 'Pending', count: pending),
+                      const SizedBox(width: 8),
+                      _StatCard(title: 'Overdue', count: overdue),
+                      const SizedBox(width: 8),
+                      _StatCard(title: 'Done', count: completed),
                     ],
                   ),
                 ),
-                const Divider(),
+                const SizedBox(height: 8),
 
-                // 3. The Task List (Now using TaskCard with Swipe-to-Delete)
                 Expanded(
                   child: state.tasks.isEmpty
                       ? const Center(child: Text('No tasks yet. Tap + to add one!'))
@@ -121,44 +137,57 @@ class DashboardPage extends StatelessWidget {
           return const SizedBox.shrink();
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => TaskInputBottomSheet.show(context),
-        child: const Icon(Icons.add),
+      // We wrap it in a Padding widget to lift it above the custom bottom nav bar
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80.0),
+        child: FloatingActionButton(
+          onPressed: () => TaskInputBottomSheet.show(context),
+          backgroundColor: Theme.of(context).colorScheme.onSurface, // Invert colors for high contrast
+          foregroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
 }
 
-// A simple custom widget for the stat boxes
+// Cleaned up _StatCard with topLabel removed entirely
 class _StatCard extends StatelessWidget {
   final String title;
   final int count;
-  final Color color;
 
-  const _StatCard({required this.title, required this.count, required this.color});
+  const _StatCard({required this.title, required this.count});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            count.toString(),
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color),
-          ),
-        ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(12),
+          border: isDark ? null : Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              count.toString(),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: textColor),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -201,9 +201,17 @@ class _TaskListViewState extends State<_TaskListView> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => TaskInputBottomSheet.show(context),
-        child: const Icon(Icons.add),
+      // We wrap it in a Padding widget to lift it above the custom bottom nav bar
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80.0),
+        child: FloatingActionButton(
+          onPressed: () => TaskInputBottomSheet.show(context),
+          backgroundColor: Theme.of(context).colorScheme.onSurface, // Invert colors for high contrast
+          foregroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

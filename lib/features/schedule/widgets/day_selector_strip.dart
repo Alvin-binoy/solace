@@ -7,10 +7,16 @@ class DaySelectorStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine colors based on the current theme
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final activeBgColor = isDark ? Colors.white : Colors.black;
+    final activeTextColor = isDark ? Colors.black : Colors.white;
+
     return BlocBuilder<ScheduleBloc, ScheduleState>(
       builder: (context, state) {
         final today = DateTime.now();
-        // Generate a list of dates: 15 days in the past to 15 days in the future
         final dates = List.generate(31, (index) {
           return today.subtract(const Duration(days: 15)).add(Duration(days: index));
         });
@@ -19,7 +25,6 @@ class DaySelectorStrip extends StatelessWidget {
           height: 80,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            // Center the initial scroll roughly on 'today'
             controller: ScrollController(initialScrollOffset: 15 * 68.0),
             itemCount: dates.length,
             itemBuilder: (context, index) {
@@ -34,30 +39,29 @@ class DaySelectorStrip extends StatelessWidget {
                   width: 60,
                   margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
-                    ),
+                    color: isSelected ? activeBgColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    border: isSelected ? null : Border.all(color: mutedTextColor.withOpacity(0.2)),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _getWeekday(date.weekday),
+                        _getWeekday(date.weekday).toUpperCase(),
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey.shade600,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          color: isSelected ? activeTextColor : mutedTextColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${date.day}',
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          color: isSelected ? activeTextColor : textColor,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],

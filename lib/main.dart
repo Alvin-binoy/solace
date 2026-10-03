@@ -9,19 +9,16 @@ import 'core/services/overdue_checker_service.dart';
 import 'features/tasks/presentation/bloc/task_bloc.dart';
 import 'features/tasks/presentation/bloc/task_event.dart';
 
-// We keep a reference to the listener so it stays alive
+// NEW: Global ValueNotifier to easily toggle themes from anywhere
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark); // Defaulting to dark mode to match your vibe!
+
 late final AppLifecycleListener _lifecycleListener;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Set up dependency injection
   configureDependencies();
-
-  // Run the overdue check immediately on app start
   GetIt.I<OverdueCheckerService>().checkNow();
 
-  // Listen for the app coming back to the foreground (e.g., from home screen)
   _lifecycleListener = AppLifecycleListener(
     onResume: () {
       GetIt.I<OverdueCheckerService>().checkNow();
@@ -38,13 +35,19 @@ class SolaceApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => GetIt.I<TaskBloc>()..add(WatchTasksEvent()),
-      child: MaterialApp.router(
-        title: 'Solace',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
-        themeMode: ThemeMode.system,
-        routerConfig: appRouter,
+      // NEW: ValueListenableBuilder listens to themeNotifier and rebuilds the app when changed
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: themeNotifier,
+        builder: (_, ThemeMode currentMode, __) {
+          return MaterialApp.router(
+            title: 'Solace',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
+            themeMode: currentMode,
+            routerConfig: appRouter,
+          );
+        },
       ),
     );
   }
