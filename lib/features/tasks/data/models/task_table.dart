@@ -10,8 +10,15 @@ class Tasks extends Table {
   TextColumn get priority => textEnum<TaskPriority>()();
   TextColumn get category => textEnum<TaskCategory>()();
   TextColumn get status => textEnum<TaskStatus>()();
-  DateTimeColumn get deadline => dateTime().nullable()();
+
+  // The general date the task is scheduled for (Flexible To-Do)
   DateTimeColumn get scheduledAt => dateTime().nullable()();
+
+  // NEW: Optional time-blocking fields for professional calendar events
+  DateTimeColumn get startTime => dateTime().nullable()();
+  DateTimeColumn get endTime => dateTime().nullable()();
+
+  DateTimeColumn get deadline => dateTime().nullable()();
   BoolColumn get isRecurring => boolean().withDefault(const Constant(false))();
   TextColumn get recurrenceRule => text().nullable()();
   TextColumn get parentTaskId => text().nullable()();

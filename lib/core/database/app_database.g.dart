@@ -68,23 +68,45 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         type: DriftSqlType.string,
         requiredDuringInsert: true,
       ).withConverter<TaskStatus>($TasksTable.$converterstatus);
-  static const VerificationMeta _deadlineMeta = const VerificationMeta(
-    'deadline',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deadline = GeneratedColumn<DateTime>(
-    'deadline',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _scheduledAtMeta = const VerificationMeta(
     'scheduledAt',
   );
   @override
   late final GeneratedColumn<DateTime> scheduledAt = GeneratedColumn<DateTime>(
     'scheduled_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _startTimeMeta = const VerificationMeta(
+    'startTime',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startTime = GeneratedColumn<DateTime>(
+    'start_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _endTimeMeta = const VerificationMeta(
+    'endTime',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endTime = GeneratedColumn<DateTime>(
+    'end_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deadlineMeta = const VerificationMeta(
+    'deadline',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deadline = GeneratedColumn<DateTime>(
+    'deadline',
     aliasedName,
     true,
     type: DriftSqlType.dateTime,
@@ -167,8 +189,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     priority,
     category,
     status,
-    deadline,
     scheduledAt,
+    startTime,
+    endTime,
+    deadline,
     isRecurring,
     recurrenceRule,
     parentTaskId,
@@ -210,12 +234,6 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         ),
       );
     }
-    if (data.containsKey('deadline')) {
-      context.handle(
-        _deadlineMeta,
-        deadline.isAcceptableOrUnknown(data['deadline']!, _deadlineMeta),
-      );
-    }
     if (data.containsKey('scheduled_at')) {
       context.handle(
         _scheduledAtMeta,
@@ -223,6 +241,24 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           data['scheduled_at']!,
           _scheduledAtMeta,
         ),
+      );
+    }
+    if (data.containsKey('start_time')) {
+      context.handle(
+        _startTimeMeta,
+        startTime.isAcceptableOrUnknown(data['start_time']!, _startTimeMeta),
+      );
+    }
+    if (data.containsKey('end_time')) {
+      context.handle(
+        _endTimeMeta,
+        endTime.isAcceptableOrUnknown(data['end_time']!, _endTimeMeta),
+      );
+    }
+    if (data.containsKey('deadline')) {
+      context.handle(
+        _deadlineMeta,
+        deadline.isAcceptableOrUnknown(data['deadline']!, _deadlineMeta),
       );
     }
     if (data.containsKey('is_recurring')) {
@@ -314,13 +350,21 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           data['${effectivePrefix}status'],
         )!,
       ),
-      deadline: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deadline'],
-      ),
       scheduledAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}scheduled_at'],
+      ),
+      startTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}start_time'],
+      ),
+      endTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}end_time'],
+      ),
+      deadline: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deadline'],
       ),
       isRecurring: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -369,8 +413,10 @@ class Task extends DataClass implements Insertable<Task> {
   final TaskPriority priority;
   final TaskCategory category;
   final TaskStatus status;
-  final DateTime? deadline;
   final DateTime? scheduledAt;
+  final DateTime? startTime;
+  final DateTime? endTime;
+  final DateTime? deadline;
   final bool isRecurring;
   final String? recurrenceRule;
   final String? parentTaskId;
@@ -384,8 +430,10 @@ class Task extends DataClass implements Insertable<Task> {
     required this.priority,
     required this.category,
     required this.status,
-    this.deadline,
     this.scheduledAt,
+    this.startTime,
+    this.endTime,
+    this.deadline,
     required this.isRecurring,
     this.recurrenceRule,
     this.parentTaskId,
@@ -416,11 +464,17 @@ class Task extends DataClass implements Insertable<Task> {
         $TasksTable.$converterstatus.toSql(status),
       );
     }
-    if (!nullToAbsent || deadline != null) {
-      map['deadline'] = Variable<DateTime>(deadline);
-    }
     if (!nullToAbsent || scheduledAt != null) {
       map['scheduled_at'] = Variable<DateTime>(scheduledAt);
+    }
+    if (!nullToAbsent || startTime != null) {
+      map['start_time'] = Variable<DateTime>(startTime);
+    }
+    if (!nullToAbsent || endTime != null) {
+      map['end_time'] = Variable<DateTime>(endTime);
+    }
+    if (!nullToAbsent || deadline != null) {
+      map['deadline'] = Variable<DateTime>(deadline);
     }
     map['is_recurring'] = Variable<bool>(isRecurring);
     if (!nullToAbsent || recurrenceRule != null) {
@@ -449,12 +503,18 @@ class Task extends DataClass implements Insertable<Task> {
       priority: Value(priority),
       category: Value(category),
       status: Value(status),
-      deadline: deadline == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deadline),
       scheduledAt: scheduledAt == null && nullToAbsent
           ? const Value.absent()
           : Value(scheduledAt),
+      startTime: startTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startTime),
+      endTime: endTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endTime),
+      deadline: deadline == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deadline),
       isRecurring: Value(isRecurring),
       recurrenceRule: recurrenceRule == null && nullToAbsent
           ? const Value.absent()
@@ -490,8 +550,10 @@ class Task extends DataClass implements Insertable<Task> {
       status: $TasksTable.$converterstatus.fromJson(
         serializer.fromJson<String>(json['status']),
       ),
-      deadline: serializer.fromJson<DateTime?>(json['deadline']),
       scheduledAt: serializer.fromJson<DateTime?>(json['scheduledAt']),
+      startTime: serializer.fromJson<DateTime?>(json['startTime']),
+      endTime: serializer.fromJson<DateTime?>(json['endTime']),
+      deadline: serializer.fromJson<DateTime?>(json['deadline']),
       isRecurring: serializer.fromJson<bool>(json['isRecurring']),
       recurrenceRule: serializer.fromJson<String?>(json['recurrenceRule']),
       parentTaskId: serializer.fromJson<String?>(json['parentTaskId']),
@@ -518,8 +580,10 @@ class Task extends DataClass implements Insertable<Task> {
       'status': serializer.toJson<String>(
         $TasksTable.$converterstatus.toJson(status),
       ),
-      'deadline': serializer.toJson<DateTime?>(deadline),
       'scheduledAt': serializer.toJson<DateTime?>(scheduledAt),
+      'startTime': serializer.toJson<DateTime?>(startTime),
+      'endTime': serializer.toJson<DateTime?>(endTime),
+      'deadline': serializer.toJson<DateTime?>(deadline),
       'isRecurring': serializer.toJson<bool>(isRecurring),
       'recurrenceRule': serializer.toJson<String?>(recurrenceRule),
       'parentTaskId': serializer.toJson<String?>(parentTaskId),
@@ -536,8 +600,10 @@ class Task extends DataClass implements Insertable<Task> {
     TaskPriority? priority,
     TaskCategory? category,
     TaskStatus? status,
-    Value<DateTime?> deadline = const Value.absent(),
     Value<DateTime?> scheduledAt = const Value.absent(),
+    Value<DateTime?> startTime = const Value.absent(),
+    Value<DateTime?> endTime = const Value.absent(),
+    Value<DateTime?> deadline = const Value.absent(),
     bool? isRecurring,
     Value<String?> recurrenceRule = const Value.absent(),
     Value<String?> parentTaskId = const Value.absent(),
@@ -551,8 +617,10 @@ class Task extends DataClass implements Insertable<Task> {
     priority: priority ?? this.priority,
     category: category ?? this.category,
     status: status ?? this.status,
-    deadline: deadline.present ? deadline.value : this.deadline,
     scheduledAt: scheduledAt.present ? scheduledAt.value : this.scheduledAt,
+    startTime: startTime.present ? startTime.value : this.startTime,
+    endTime: endTime.present ? endTime.value : this.endTime,
+    deadline: deadline.present ? deadline.value : this.deadline,
     isRecurring: isRecurring ?? this.isRecurring,
     recurrenceRule: recurrenceRule.present
         ? recurrenceRule.value
@@ -574,10 +642,12 @@ class Task extends DataClass implements Insertable<Task> {
       priority: data.priority.present ? data.priority.value : this.priority,
       category: data.category.present ? data.category.value : this.category,
       status: data.status.present ? data.status.value : this.status,
-      deadline: data.deadline.present ? data.deadline.value : this.deadline,
       scheduledAt: data.scheduledAt.present
           ? data.scheduledAt.value
           : this.scheduledAt,
+      startTime: data.startTime.present ? data.startTime.value : this.startTime,
+      endTime: data.endTime.present ? data.endTime.value : this.endTime,
+      deadline: data.deadline.present ? data.deadline.value : this.deadline,
       isRecurring: data.isRecurring.present
           ? data.isRecurring.value
           : this.isRecurring,
@@ -604,8 +674,10 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('priority: $priority, ')
           ..write('category: $category, ')
           ..write('status: $status, ')
-          ..write('deadline: $deadline, ')
           ..write('scheduledAt: $scheduledAt, ')
+          ..write('startTime: $startTime, ')
+          ..write('endTime: $endTime, ')
+          ..write('deadline: $deadline, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
           ..write('parentTaskId: $parentTaskId, ')
@@ -624,8 +696,10 @@ class Task extends DataClass implements Insertable<Task> {
     priority,
     category,
     status,
-    deadline,
     scheduledAt,
+    startTime,
+    endTime,
+    deadline,
     isRecurring,
     recurrenceRule,
     parentTaskId,
@@ -643,8 +717,10 @@ class Task extends DataClass implements Insertable<Task> {
           other.priority == this.priority &&
           other.category == this.category &&
           other.status == this.status &&
-          other.deadline == this.deadline &&
           other.scheduledAt == this.scheduledAt &&
+          other.startTime == this.startTime &&
+          other.endTime == this.endTime &&
+          other.deadline == this.deadline &&
           other.isRecurring == this.isRecurring &&
           other.recurrenceRule == this.recurrenceRule &&
           other.parentTaskId == this.parentTaskId &&
@@ -660,8 +736,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<TaskPriority> priority;
   final Value<TaskCategory> category;
   final Value<TaskStatus> status;
-  final Value<DateTime?> deadline;
   final Value<DateTime?> scheduledAt;
+  final Value<DateTime?> startTime;
+  final Value<DateTime?> endTime;
+  final Value<DateTime?> deadline;
   final Value<bool> isRecurring;
   final Value<String?> recurrenceRule;
   final Value<String?> parentTaskId;
@@ -676,8 +754,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.priority = const Value.absent(),
     this.category = const Value.absent(),
     this.status = const Value.absent(),
-    this.deadline = const Value.absent(),
     this.scheduledAt = const Value.absent(),
+    this.startTime = const Value.absent(),
+    this.endTime = const Value.absent(),
+    this.deadline = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
     this.parentTaskId = const Value.absent(),
@@ -693,8 +773,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required TaskPriority priority,
     required TaskCategory category,
     required TaskStatus status,
-    this.deadline = const Value.absent(),
     this.scheduledAt = const Value.absent(),
+    this.startTime = const Value.absent(),
+    this.endTime = const Value.absent(),
+    this.deadline = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
     this.parentTaskId = const Value.absent(),
@@ -715,8 +797,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<String>? priority,
     Expression<String>? category,
     Expression<String>? status,
-    Expression<DateTime>? deadline,
     Expression<DateTime>? scheduledAt,
+    Expression<DateTime>? startTime,
+    Expression<DateTime>? endTime,
+    Expression<DateTime>? deadline,
     Expression<bool>? isRecurring,
     Expression<String>? recurrenceRule,
     Expression<String>? parentTaskId,
@@ -732,8 +816,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (priority != null) 'priority': priority,
       if (category != null) 'category': category,
       if (status != null) 'status': status,
-      if (deadline != null) 'deadline': deadline,
       if (scheduledAt != null) 'scheduled_at': scheduledAt,
+      if (startTime != null) 'start_time': startTime,
+      if (endTime != null) 'end_time': endTime,
+      if (deadline != null) 'deadline': deadline,
       if (isRecurring != null) 'is_recurring': isRecurring,
       if (recurrenceRule != null) 'recurrence_rule': recurrenceRule,
       if (parentTaskId != null) 'parent_task_id': parentTaskId,
@@ -752,8 +838,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<TaskPriority>? priority,
     Value<TaskCategory>? category,
     Value<TaskStatus>? status,
-    Value<DateTime?>? deadline,
     Value<DateTime?>? scheduledAt,
+    Value<DateTime?>? startTime,
+    Value<DateTime?>? endTime,
+    Value<DateTime?>? deadline,
     Value<bool>? isRecurring,
     Value<String?>? recurrenceRule,
     Value<String?>? parentTaskId,
@@ -769,8 +857,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
       priority: priority ?? this.priority,
       category: category ?? this.category,
       status: status ?? this.status,
-      deadline: deadline ?? this.deadline,
       scheduledAt: scheduledAt ?? this.scheduledAt,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      deadline: deadline ?? this.deadline,
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       parentTaskId: parentTaskId ?? this.parentTaskId,
@@ -808,11 +898,17 @@ class TasksCompanion extends UpdateCompanion<Task> {
         $TasksTable.$converterstatus.toSql(status.value),
       );
     }
-    if (deadline.present) {
-      map['deadline'] = Variable<DateTime>(deadline.value);
-    }
     if (scheduledAt.present) {
       map['scheduled_at'] = Variable<DateTime>(scheduledAt.value);
+    }
+    if (startTime.present) {
+      map['start_time'] = Variable<DateTime>(startTime.value);
+    }
+    if (endTime.present) {
+      map['end_time'] = Variable<DateTime>(endTime.value);
+    }
+    if (deadline.present) {
+      map['deadline'] = Variable<DateTime>(deadline.value);
     }
     if (isRecurring.present) {
       map['is_recurring'] = Variable<bool>(isRecurring.value);
@@ -847,8 +943,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('priority: $priority, ')
           ..write('category: $category, ')
           ..write('status: $status, ')
-          ..write('deadline: $deadline, ')
           ..write('scheduledAt: $scheduledAt, ')
+          ..write('startTime: $startTime, ')
+          ..write('endTime: $endTime, ')
+          ..write('deadline: $deadline, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
           ..write('parentTaskId: $parentTaskId, ')
@@ -1248,8 +1346,10 @@ typedef $$TasksTableCreateCompanionBuilder =
       required TaskPriority priority,
       required TaskCategory category,
       required TaskStatus status,
-      Value<DateTime?> deadline,
       Value<DateTime?> scheduledAt,
+      Value<DateTime?> startTime,
+      Value<DateTime?> endTime,
+      Value<DateTime?> deadline,
       Value<bool> isRecurring,
       Value<String?> recurrenceRule,
       Value<String?> parentTaskId,
@@ -1266,8 +1366,10 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<TaskPriority> priority,
       Value<TaskCategory> category,
       Value<TaskStatus> status,
-      Value<DateTime?> deadline,
       Value<DateTime?> scheduledAt,
+      Value<DateTime?> startTime,
+      Value<DateTime?> endTime,
+      Value<DateTime?> deadline,
       Value<bool> isRecurring,
       Value<String?> recurrenceRule,
       Value<String?> parentTaskId,
@@ -1318,13 +1420,23 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
 
-  ColumnFilters<DateTime> get deadline => $composableBuilder(
-    column: $table.deadline,
+  ColumnFilters<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get scheduledAt => $composableBuilder(
-    column: $table.scheduledAt,
+  ColumnFilters<DateTime> get startTime => $composableBuilder(
+    column: $table.startTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endTime => $composableBuilder(
+    column: $table.endTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deadline => $composableBuilder(
+    column: $table.deadline,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1398,13 +1510,23 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get deadline => $composableBuilder(
-    column: $table.deadline,
+  ColumnOrderings<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get scheduledAt => $composableBuilder(
-    column: $table.scheduledAt,
+  ColumnOrderings<DateTime> get startTime => $composableBuilder(
+    column: $table.startTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endTime => $composableBuilder(
+    column: $table.endTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deadline => $composableBuilder(
+    column: $table.deadline,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1468,13 +1590,19 @@ class $$TasksTableAnnotationComposer
   GeneratedColumnWithTypeConverter<TaskStatus, String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get deadline =>
-      $composableBuilder(column: $table.deadline, builder: (column) => column);
-
   GeneratedColumn<DateTime> get scheduledAt => $composableBuilder(
     column: $table.scheduledAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get startTime =>
+      $composableBuilder(column: $table.startTime, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endTime =>
+      $composableBuilder(column: $table.endTime, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deadline =>
+      $composableBuilder(column: $table.deadline, builder: (column) => column);
 
   GeneratedColumn<bool> get isRecurring => $composableBuilder(
     column: $table.isRecurring,
@@ -1537,8 +1665,10 @@ class $$TasksTableTableManager
                 Value<TaskPriority> priority = const Value.absent(),
                 Value<TaskCategory> category = const Value.absent(),
                 Value<TaskStatus> status = const Value.absent(),
-                Value<DateTime?> deadline = const Value.absent(),
                 Value<DateTime?> scheduledAt = const Value.absent(),
+                Value<DateTime?> startTime = const Value.absent(),
+                Value<DateTime?> endTime = const Value.absent(),
+                Value<DateTime?> deadline = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
                 Value<String?> parentTaskId = const Value.absent(),
@@ -1553,8 +1683,10 @@ class $$TasksTableTableManager
                 priority: priority,
                 category: category,
                 status: status,
-                deadline: deadline,
                 scheduledAt: scheduledAt,
+                startTime: startTime,
+                endTime: endTime,
+                deadline: deadline,
                 isRecurring: isRecurring,
                 recurrenceRule: recurrenceRule,
                 parentTaskId: parentTaskId,
@@ -1571,8 +1703,10 @@ class $$TasksTableTableManager
                 required TaskPriority priority,
                 required TaskCategory category,
                 required TaskStatus status,
-                Value<DateTime?> deadline = const Value.absent(),
                 Value<DateTime?> scheduledAt = const Value.absent(),
+                Value<DateTime?> startTime = const Value.absent(),
+                Value<DateTime?> endTime = const Value.absent(),
+                Value<DateTime?> deadline = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
                 Value<String?> parentTaskId = const Value.absent(),
@@ -1587,8 +1721,10 @@ class $$TasksTableTableManager
                 priority: priority,
                 category: category,
                 status: status,
-                deadline: deadline,
                 scheduledAt: scheduledAt,
+                startTime: startTime,
+                endTime: endTime,
+                deadline: deadline,
                 isRecurring: isRecurring,
                 recurrenceRule: recurrenceRule,
                 parentTaskId: parentTaskId,
