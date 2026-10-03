@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import '../widgets/task_input_bottom_sheet.dart';
 import '../../../../core/enums/task_status.dart';
 import '../../../../core/router/route_names.dart';
 import '../bloc/task_bloc.dart';
 import '../bloc/task_event.dart';
 import '../bloc/task_state.dart';
 import '../widgets/task_card.dart';
-import 'create_edit_task_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -110,17 +109,7 @@ class DashboardPage extends StatelessWidget {
                                 .read<TaskBloc>()
                                 .add(UpdateTaskEvent(task.copyWith(status: newStatus)));
                           },
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => BlocProvider.value(
-                                  value: context.read<TaskBloc>(),
-                                  child: CreateEditTaskPage(existingTask: task),
-                                ),
-                              ),
-                            );
-                          },
+                          onTap: () => TaskInputBottomSheet.show(context, existingTask: task),
                         ),
                       );
                     },
@@ -133,7 +122,7 @@ class DashboardPage extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(RouteNames.taskCreate),
+        onPressed: () => TaskInputBottomSheet.show(context),
         child: const Icon(Icons.add),
       ),
     );
