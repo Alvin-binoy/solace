@@ -18,12 +18,32 @@ class TaskCard extends StatelessWidget {
     required this.onTap,
   });
 
+  // Helper to cleanly format the Scheduled Date and Times
+  String? _getScheduleText() {
+    if (task.scheduledAt == null) return null;
+
+    String text = DateFormat('MMM d').format(task.scheduledAt!);
+
+    if (task.startTime != null && task.endTime != null) {
+      final start = DateFormat('h:mm a').format(task.startTime!);
+      final end = DateFormat('h:mm a').format(task.endTime!);
+      text += ' • $start - $end';
+    } else if (task.startTime != null) {
+      final start = DateFormat('h:mm a').format(task.startTime!);
+      text += ' • $start';
+    }
+
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompleted = task.status == TaskStatus.completed;
     final isOverdue = task.deadline != null &&
         task.deadline!.isBefore(DateTime.now()) &&
         !isCompleted;
+
+    final scheduleText = _getScheduleText();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -69,12 +89,34 @@ class TaskCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             task.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,
                             ),
+                          ),
+                        ],
+                        // NEW: Schedule Display Block
+                        if (scheduleText != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.schedule,
+                                size: 14,
+                                color: isCompleted ? Colors.grey : Theme.of(context).primaryColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                scheduleText,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: isCompleted
+                                      ? Colors.grey
+                                      : Theme.of(context).primaryColor,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ],

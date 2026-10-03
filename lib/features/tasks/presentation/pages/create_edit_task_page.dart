@@ -23,6 +23,10 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
   late TextEditingController _descController;
   late TaskPriority _priority;
   late TaskCategory _category;
+
+  DateTime? _scheduledDate;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
   DateTime? _deadline;
 
   @override
@@ -33,7 +37,16 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
     _descController = TextEditingController(text: t?.description ?? '');
     _priority = t?.priority ?? TaskPriority.medium;
     _category = t?.category ?? TaskCategory.personal;
+
+    _scheduledDate = t?.scheduledAt;
     _deadline = t?.deadline;
+
+    if (t?.startTime != null) {
+      _startTime = TimeOfDay(hour: t!.startTime!.hour, minute: t.startTime!.minute);
+    }
+    if (t?.endTime != null) {
+      _endTime = TimeOfDay(hour: t!.endTime!.hour, minute: t.endTime!.minute);
+    }
   }
 
   @override
@@ -51,6 +64,48 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       return;
     }
 
+    if (_scheduledDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a Schedule Date')),
+      );
+      return;
+    }
+
+    // NEW LOGIC 1: Enforce matching pairs (Both or Neither)
+    if ((_startTime != null && _endTime == null) || (_startTime == null && _endTime != null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select both a Start and End time, or leave both empty')),
+      );
+      return;
+    }
+
+    // NEW LOGIC 2: Enforce End Time > Start Time
+    if (_startTime != null && _endTime != null) {
+      // Convert to minutes from midnight to easily compare them mathematically
+      final startMinutes = (_startTime!.hour * 60) + _startTime!.minute;
+      final endMinutes = (_endTime!.hour * 60) + _endTime!.minute;
+
+      if (endMinutes <= startMinutes) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('End Time must be after the Start Time')),
+        );
+        return;
+      }
+    }
+
+    DateTime? finalStartTime;
+    DateTime? finalEndTime;
+    final baseDate = _scheduledDate!;
+
+    if (_startTime != null) {
+      finalStartTime = DateTime(
+          baseDate.year, baseDate.month, baseDate.day, _startTime!.hour, _startTime!.minute);
+    }
+    if (_endTime != null) {
+      finalEndTime = DateTime(
+          baseDate.year, baseDate.month, baseDate.day, _endTime!.hour, _endTime!.minute);
+    }
+
     final isEditing = widget.existingTask != null;
     final task = TaskEntity(
       id: isEditing ? widget.existingTask!.id : DateTime.now().millisecondsSinceEpoch.toString(),
@@ -59,6 +114,9 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       priority: _priority,
       category: _category,
       status: isEditing ? widget.existingTask!.status : TaskStatus.pending,
+      scheduledAt: _scheduledDate,
+      startTime: finalStartTime,
+      endTime: finalEndTime,
       deadline: _deadline,
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
@@ -70,7 +128,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       context.read<TaskBloc>().add(AddTaskEvent(task));
     }
 
-    context.pop(); // Return to previous screen
+    context.pop();
   }
 
   @override
@@ -93,46 +151,120 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
             maxLines: 3,
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<TaskPriority>(
-            initialValue: _priority,
-            decoration: const InputDecoration(labelText: 'Priority'),
-            items: TaskPriority.values
-                .map((p) => DropdownMenuItem(value: p, child: Text(p.name.toUpperCase())))
-                .toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _priority = val);
-            },
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<TaskPriority>(
+                  initialValue: _priority,
+                  decoration: const InputDecoration(labelText: 'Priority'),
+                  items: TaskPriority.values
+                      .map((p) => DropdownMenuItem(value: p, child: Text(p.name.toUpperCase())))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _priority = val);
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: DropdownButtonFormField<TaskCategory>(
+                  initialValue: _category,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  items: TaskCategory.values
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c.name.toUpperCase())))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _category = val);
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<TaskCategory>(
-            initialValue: _category,
-            decoration: const InputDecoration(labelText: 'Category'),
-            items: TaskCategory.values
-                .map((c) => DropdownMenuItem(value: c, child: Text(c.name.toUpperCase())))
-                .toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _category = val);
-            },
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+
+          const Text('Scheduling', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Divider(),
+
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(_deadline == null
-                ? 'No deadline set'
-                : 'Deadline: ${_deadline.toString().split(' ')[0]}'),
+            title: Text(_scheduledDate == null
+                ? 'Schedule Date' // Removed "Optional"
+                : 'Date: ${_scheduledDate.toString().split(' ')[0]}'),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
-                initialDate: _deadline ?? DateTime.now(),
+                initialDate: _scheduledDate ?? DateTime.now(),
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
               );
-              if (picked != null) {
-                setState(() => _deadline = picked);
-              }
+              if (picked != null) setState(() => _scheduledDate = picked);
             },
           ),
+          Row(
+            children: [
+              Expanded(
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                      _startTime == null ? 'Start Time (Optional)' : _startTime!.format(context),
+                      style: const TextStyle(fontSize: 14)
+                  ),
+                  // NEW LOGIC: Show Clock icon if empty, show 'X' button if a time is picked
+                  trailing: _startTime == null
+                      ? const Icon(Icons.access_time, size: 20)
+                      : IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => setState(() => _startTime = null), // Clears the time
+                  ),
+                  onTap: () async {
+                    if (_scheduledDate == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please select a Schedule Date first')),
+                      );
+                      return;
+                    }
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: _startTime ?? TimeOfDay.now(),
+                    );
+                    if (picked != null) setState(() => _startTime = picked);
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                      _endTime == null ? 'End Time (Optional)' : _endTime!.format(context),
+                      style: const TextStyle(fontSize: 14)
+                  ),
+                  // NEW LOGIC: Show Clock icon if empty, show 'X' button if a time is picked
+                  trailing: _endTime == null
+                      ? const Icon(Icons.access_time, size: 20)
+                      : IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => setState(() => _endTime = null), // Clears the time
+                  ),
+                  onTap: () async {
+                    if (_scheduledDate == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please select a Schedule Date first')),
+                      );
+                      return;
+                    }
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: _endTime ?? TimeOfDay.now(),
+                    );
+                    if (picked != null) setState(() => _endTime = picked);
+                  },
+                ),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: _saveTask,

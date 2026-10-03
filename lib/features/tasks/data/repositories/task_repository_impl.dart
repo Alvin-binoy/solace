@@ -24,6 +24,9 @@ class TaskRepositoryImpl implements TaskRepository {
       status: model.status,
       deadline: model.deadline,
       scheduledAt: model.scheduledAt,
+      // NEW: Map the start and end times to the entity
+      startTime: model.startTime,
+      endTime: model.endTime,
       isRecurring: model.isRecurring,
       recurrenceRule: model.recurrenceRule,
       parentTaskId: model.parentTaskId,
@@ -43,6 +46,9 @@ class TaskRepositoryImpl implements TaskRepository {
       status: Value(entity.status),
       deadline: Value(entity.deadline),
       scheduledAt: Value(entity.scheduledAt),
+      // NEW: Map the start and end times to the database companion
+      startTime: Value(entity.startTime),
+      endTime: Value(entity.endTime),
       isRecurring: Value(entity.isRecurring),
       recurrenceRule: Value(entity.recurrenceRule),
       parentTaskId: Value(entity.parentTaskId),
@@ -91,7 +97,6 @@ class TaskRepositoryImpl implements TaskRepository {
     }
   }
 
-  // NEW: Tell the datasource to actually run the overdue check
   @override
   Future<Either<Failure, void>> markOverdueTasks() async {
     try {

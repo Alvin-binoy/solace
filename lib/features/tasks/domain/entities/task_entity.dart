@@ -12,6 +12,11 @@ class TaskEntity extends Equatable {
   final TaskStatus status;
   final DateTime? deadline;
   final DateTime? scheduledAt;
+
+  // NEW: Added for time-blocking
+  final DateTime? startTime;
+  final DateTime? endTime;
+
   final bool isRecurring;
   final String? recurrenceRule;
   final String? parentTaskId;
@@ -28,6 +33,8 @@ class TaskEntity extends Equatable {
     this.status = TaskStatus.pending,
     this.deadline,
     this.scheduledAt,
+    this.startTime,
+    this.endTime,
     this.isRecurring = false,
     this.recurrenceRule,
     this.parentTaskId,
@@ -45,6 +52,8 @@ class TaskEntity extends Equatable {
     TaskStatus? status,
     DateTime? deadline,
     DateTime? scheduledAt,
+    DateTime? startTime,
+    DateTime? endTime,
     bool? isRecurring,
     String? recurrenceRule,
     String? parentTaskId,
@@ -61,6 +70,8 @@ class TaskEntity extends Equatable {
       status: status ?? this.status,
       deadline: deadline ?? this.deadline,
       scheduledAt: scheduledAt ?? this.scheduledAt,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       parentTaskId: parentTaskId ?? this.parentTaskId,
@@ -80,6 +91,8 @@ class TaskEntity extends Equatable {
     status,
     deadline,
     scheduledAt,
+    startTime,
+    endTime,
     isRecurring,
     recurrenceRule,
     parentTaskId,

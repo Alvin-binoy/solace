@@ -138,31 +138,47 @@ class _TaskListViewState extends State<_TaskListView> {
 
                       return Dismissible(
                         key: Key(task.id),
+                        // PRO UX: Only allow swiping right-to-left for deletion
+                        direction: DismissDirection.endToStart,
                         background: Container(
-                          color: Colors.green,
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Icon(Icons.check, color: Colors.white),
-                        ),
-                        secondaryBackground: Container(
-                          color: Colors.red,
+                          color: Colors.red.shade400,
                           alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
                         ),
+                        // PRO UX: Show a confirmation dialog before actually deleting
+                        confirmDismiss: (direction) async {
+                          return await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Delete Task"),
+                                content: Text('Are you sure you want to delete "${task.title}"?'),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text(
+                                      "Delete",
+                                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                         onDismissed: (direction) {
-                          if (direction == DismissDirection.startToEnd) {
-                            // Toggle completion
-                            final newStatus = task.status == TaskStatus.completed
-                                ? TaskStatus.pending
-                                : TaskStatus.completed;
-                            context
-                                .read<TaskBloc>()
-                                .add(UpdateTaskEvent(task.copyWith(status: newStatus)));
-                          } else {
-                            // Delete
-                            context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
-                          }
+                          // This only runs if they clicked "Delete" in the dialog
+                          context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Task deleted')),
+                          );
                         },
                         child: TaskCard(
                           task: task,

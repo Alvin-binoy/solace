@@ -7,6 +7,8 @@ import '../../../../core/router/route_names.dart';
 import '../bloc/task_bloc.dart';
 import '../bloc/task_event.dart';
 import '../bloc/task_state.dart';
+import '../widgets/task_card.dart';
+import 'create_edit_task_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -49,7 +51,7 @@ class DashboardPage extends StatelessWidget {
                 ),
                 const Divider(),
 
-                // 3. The Task List
+                // 3. The Task List (Now using TaskCard with Swipe-to-Delete)
                 Expanded(
                   child: state.tasks.isEmpty
                       ? const Center(child: Text('No tasks yet. Tap + to add one!'))
@@ -57,36 +59,67 @@ class DashboardPage extends StatelessWidget {
                     itemCount: state.tasks.length,
                     itemBuilder: (context, index) {
                       final task = state.tasks[index];
-                      return ListTile(
-                        leading: Checkbox(
-                          value: task.status == TaskStatus.completed,
-                          onChanged: (value) {
+
+                      return Dismissible(
+                        key: Key(task.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red.shade400,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+                        ),
+                        confirmDismiss: (direction) async {
+                          return await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Delete Task"),
+                                content: Text('Are you sure you want to delete "${task.title}"?'),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text(
+                                      "Delete",
+                                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        onDismissed: (direction) {
+                          context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Task deleted')),
+                          );
+                        },
+                        child: TaskCard(
+                          task: task,
+                          onStatusChanged: (value) {
                             final newStatus = (value == true)
                                 ? TaskStatus.completed
                                 : TaskStatus.pending;
-                            final updatedTask = task.copyWith(status: newStatus);
-                            context.read<TaskBloc>().add(UpdateTaskEvent(updatedTask));
+                            context
+                                .read<TaskBloc>()
+                                .add(UpdateTaskEvent(task.copyWith(status: newStatus)));
                           },
-                        ),
-                        title: Text(
-                          task.title,
-                          style: TextStyle(
-                            decoration: task.status == TaskStatus.completed
-                                ? TextDecoration.lineThrough
-                                : null,
-                            color: task.status == TaskStatus.completed
-                                ? Colors.grey
-                                : (task.status == TaskStatus.overdue ? Colors.red : null),
-                          ),
-                        ),
-                        // Show an overdue label if needed
-                        subtitle: task.status == TaskStatus.overdue
-                            ? const Text('OVERDUE', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12))
-                            : null,
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                          onPressed: () {
-                            context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BlocProvider.value(
+                                  value: context.read<TaskBloc>(),
+                                  child: CreateEditTaskPage(existingTask: task),
+                                ),
+                              ),
+                            );
                           },
                         ),
                       );
