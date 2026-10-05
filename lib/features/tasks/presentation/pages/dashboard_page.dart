@@ -22,42 +22,47 @@ class DashboardPage extends StatelessWidget {
         title: const Text('DASHBOARD'),
         automaticallyImplyLeading: false,
         actions: [
-          // In-App Notification Center Bell
-          BlocBuilder<TaskBloc, TaskState>(
-            builder: (context, state) {
-              int activeAlarmsCount = 0;
-              List<TaskEntity> activeAlarmTasks = [];
+          // NEW: StreamBuilder acts as a real-time clock, forcing the bell to refresh every 30 seconds
+          StreamBuilder(
+              stream: Stream.periodic(const Duration(seconds: 30)),
+              builder: (context, _) {
+                return BlocBuilder<TaskBloc, TaskState>(
+                  builder: (context, state) {
+                    int activeAlarmsCount = 0;
+                    List<TaskEntity> activeAlarmTasks = [];
 
-              if (state is TaskLoaded) {
-                final now = DateTime.now();
+                    if (state is TaskLoaded) {
+                      final now = DateTime.now();
 
-                // Filter only pending tasks with a future reminder
-                activeAlarmTasks = state.tasks.where((t) {
-                  if (t.status == TaskStatus.completed || t.reminderLeadMinutes == null || t.startTime == null) {
-                    return false;
-                  }
-                  // Calculate exact ring time
-                  final ringTime = t.startTime!.subtract(Duration(minutes: t.reminderLeadMinutes!));
+                      // Filter only pending tasks with a future reminder
+                      activeAlarmTasks = state.tasks.where((t) {
+                        if (t.status == TaskStatus.completed || t.reminderLeadMinutes == null || t.startTime == null) {
+                          return false;
+                        }
+                        // Calculate exact ring time
+                        final ringTime = t.startTime!.subtract(Duration(minutes: t.reminderLeadMinutes!));
 
-                  // ONLY keep it if the ring time hasn't passed yet
-                  return ringTime.isAfter(now);
-                }).toList();
+                        // ONLY keep it if the ring time hasn't passed yet
+                        return ringTime.isAfter(now);
+                      }).toList();
 
-                activeAlarmsCount = activeAlarmTasks.length;
+                      activeAlarmsCount = activeAlarmTasks.length;
+                    }
+
+                    return IconButton(
+                      icon: Badge(
+                        isLabelVisible: activeAlarmsCount > 0,
+                        label: Text(activeAlarmsCount.toString()),
+                        child: const Icon(Icons.notifications_outlined),
+                      ),
+                      tooltip: 'Active Alarms',
+                      onPressed: () {
+                        _showNotificationCenter(context, activeAlarmTasks);
+                      },
+                    );
+                  },
+                );
               }
-
-              return IconButton(
-                icon: Badge(
-                  isLabelVisible: activeAlarmsCount > 0,
-                  label: Text(activeAlarmsCount.toString()),
-                  child: const Icon(Icons.notifications_outlined),
-                ),
-                tooltip: 'Active Alarms',
-                onPressed: () {
-                  _showNotificationCenter(context, activeAlarmTasks);
-                },
-              );
-            },
           ),
 
           ValueListenableBuilder<ThemeMode>(
