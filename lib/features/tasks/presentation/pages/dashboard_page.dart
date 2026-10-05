@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart'; // NEW: For formatting the alarm time
+import 'package:intl/intl.dart';
 import '../../../../main.dart';
 import '../widgets/task_input_bottom_sheet.dart';
 import '../../../../core/enums/task_status.dart';
 import '../../../../core/router/route_names.dart';
-import '../../domain/entities/task_entity.dart'; // NEW: Required for the active tasks list
+import '../../domain/entities/task_entity.dart';
 import '../bloc/task_bloc.dart';
 import '../bloc/task_event.dart';
 import '../bloc/task_state.dart';
@@ -22,8 +22,7 @@ class DashboardPage extends StatelessWidget {
         title: const Text('DASHBOARD'),
         automaticallyImplyLeading: false,
         actions: [
-          // NEW: In-App Notification Center Bell
-          // NEW: In-App Notification Center Bell
+          // In-App Notification Center Bell
           BlocBuilder<TaskBloc, TaskState>(
             builder: (context, state) {
               int activeAlarmsCount = 0;
@@ -87,9 +86,12 @@ class DashboardPage extends StatelessWidget {
             );
           } else if (state is TaskLoaded) {
 
-            final pending = state.tasks.where((t) => t.status == TaskStatus.pending).length;
-            final completed = state.tasks.where((t) => t.status == TaskStatus.completed).length;
-            final overdue = state.tasks.where((t) => t.status == TaskStatus.overdue).length;
+            // 1. Split data into active and completed
+            final activeTasks = state.tasks.where((t) => t.status != TaskStatus.completed).toList();
+            final completedTasks = state.tasks.where((t) => t.status == TaskStatus.completed).toList();
+
+            final pendingCount = state.tasks.where((t) => t.status == TaskStatus.pending).length;
+            final overdueCount = state.tasks.where((t) => t.status == TaskStatus.overdue).length;
 
             return Column(
               children: [
@@ -97,11 +99,11 @@ class DashboardPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Row(
                     children: [
-                      _StatCard(title: 'Pending', count: pending),
+                      _StatCard(title: 'Pending', count: pendingCount),
                       const SizedBox(width: 8),
-                      _StatCard(title: 'Overdue', count: overdue),
+                      _StatCard(title: 'Overdue', count: overdueCount),
                       const SizedBox(width: 8),
-                      _StatCard(title: 'Done', count: completed),
+                      _StatCard(title: 'Done', count: completedTasks.length),
                     ],
                   ),
                 ),
@@ -111,61 +113,34 @@ class DashboardPage extends StatelessWidget {
                   child: state.tasks.isEmpty
                       ? const Center(child: Text('No tasks yet. Tap + to add one!'))
                       : ListView.builder(
-                    itemCount: state.tasks.length,
+                    // Total item count is active tasks + 1 (the completed dropdown tile if it has items)
+                    itemCount: activeTasks.length + (completedTasks.isNotEmpty ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final task = state.tasks[index];
 
-                      return Dismissible(
-                        key: Key(task.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red.shade400,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
-                        ),
-                        confirmDismiss: (direction) async {
-                          return await showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text("Delete Task"),
-                                content: Text('Are you sure you want to delete "${task.title}"?'),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: const Text("Cancel"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(true),
-                                    child: const Text(
-                                      "Delete",
-                                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        onDismissed: (direction) {
-                          context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Task deleted')),
-                          );
-                        },
-                        child: TaskCard(
-                          task: task,
-                          onStatusChanged: (value) {
-                            final newStatus = (value == true)
-                                ? TaskStatus.completed
-                                : TaskStatus.pending;
-                            context
-                                .read<TaskBloc>()
-                                .add(UpdateTaskEvent(task.copyWith(status: newStatus)));
-                          },
-                          onTap: () => TaskInputBottomSheet.show(context, existingTask: task),
+                      // Build Active Tasks
+                      if (index < activeTasks.length) {
+                        return _buildTaskRow(context, activeTasks[index]);
+                      }
+
+                      // Build the Completed Dropdown at the very bottom
+                      return Theme(
+                        // Removes the ugly default borders around ExpansionTile
+                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: ExpansionTile(
+                            key: const PageStorageKey('completed_tasks_dropdown'),
+                            leading: const Icon(Icons.check_circle_outline, color: Colors.grey),
+                            title: Text(
+                              'Completed (${completedTasks.length})',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
+                            ),
+                            children: completedTasks.map((task) => _buildTaskRow(context, task)).toList(),
+                          ),
                         ),
                       );
                     },
@@ -191,7 +166,60 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // NEW: Bottom Sheet for the Notification Center
+  // NEW: Helper method to build a task row so we don't duplicate the Dismissible code
+  Widget _buildTaskRow(BuildContext context, TaskEntity task) {
+    return Dismissible(
+      key: Key(task.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Colors.red.shade400,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Delete Task"),
+              content: Text('Are you sure you want to delete "${task.title}"?'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text(
+                    "Delete",
+                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) {
+        context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task deleted')),
+        );
+      },
+      child: TaskCard(
+        task: task,
+        onStatusChanged: (value) {
+          final newStatus = (value == true) ? TaskStatus.completed : TaskStatus.pending;
+          context.read<TaskBloc>().add(UpdateTaskEvent(task.copyWith(status: newStatus)));
+        },
+        onTap: () => TaskInputBottomSheet.show(context, existingTask: task),
+      ),
+    );
+  }
+
+  // Bottom Sheet for the Notification Center
   void _showNotificationCenter(BuildContext context, List<TaskEntity> activeTasks) {
     showModalBottomSheet(
       context: context,
