@@ -45,7 +45,9 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
   late TaskPriority _priority;
   late TaskCategory _category;
 
-  // NEW: Track if the user has explicitly interacted with these
+  // NEW: Track the reminder preference
+  int? _reminderLeadMinutes;
+
   bool _hasModifiedPriority = false;
   bool _hasModifiedCategory = false;
 
@@ -60,6 +62,9 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
 
     _priority = t?.priority ?? TaskPriority.medium;
     _category = t?.category ?? TaskCategory.personal;
+
+    // NEW: Load existing reminder if editing
+    _reminderLeadMinutes = t?.reminderLeadMinutes;
 
     if (t != null) {
       _hasModifiedPriority = true;
@@ -144,7 +149,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(p.name.toUpperCase(), style: const TextStyle(fontSize: 16)),
-                // NEW: Show a checkmark for the currently selected item
                 if (_priority == p) const Icon(Icons.check, color: Colors.deepOrange),
               ],
             ),
@@ -155,7 +159,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     if (picked != null) {
       setState(() {
         _priority = picked;
-        _hasModifiedPriority = true; // Show the chip!
+        _hasModifiedPriority = true;
       });
     }
   }
@@ -174,7 +178,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(c.name.toUpperCase(), style: const TextStyle(fontSize: 16)),
-                // NEW: Show a checkmark for the currently selected item
                 if (_category == c) const Icon(Icons.check, color: Colors.blue),
               ],
             ),
@@ -185,8 +188,109 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     if (picked != null) {
       setState(() {
         _category = picked;
-        _hasModifiedCategory = true; // Show the chip!
+        _hasModifiedCategory = true;
       });
+    }
+  }
+
+  // NEW: Dialog for picking the reminder lead time
+  void _pickReminder() async {
+    final Map<int?, String> options = {
+      null: "No alarm",
+      0: "At time of task",
+      5: "5 minutes before",
+      15: "15 minutes before",
+      30: "30 minutes before",
+      60: "1 hour before"
+    };
+
+    final picked = await showDialog<int?>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Set Reminder'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        children: options.entries.map((entry) => SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, entry.key), // passing null is valid here to cancel alarm
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(entry.value, style: const TextStyle(fontSize: 16)),
+                if (_reminderLeadMinutes == entry.key) const Icon(Icons.check, color: Colors.purple),
+              ],
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+
+    // showDialog returns null if user taps outside.
+    // We only update if they explicitly tapped an option (including the "No alarm" option which returns a deliberate null, handled differently in Dart if needed, but we check if it was explicitly popped with a value).
+    // To handle explicit null vs implicit dismiss, we wrap the return.
+    // Actually, `picked` will be null if tapped outside OR if "No alarm" was selected.
+    // To fix that, we'll just always update if they made a choice.
+    if (picked != _reminderLeadMinutes) {
+      setState(() {
+        _reminderLeadMinutes = picked;
+      });
+    }
+  }
+
+  void _pickReminderSafe() async {
+    // NEW LOGIC: Block alarm if exact time isn't set!
+    if (_scheduledDate == null || _startTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please set a Date and Start Time before setting an alarm.')),
+      );
+      return;
+    }
+
+    final Map<int?, String> options = {
+      null: "No alarm",
+      0: "At time of task",
+      5: "5 minutes before",
+      15: "15 minutes before",
+      30: "30 minutes before",
+      60: "1 hour before"
+    };
+
+    await showDialog(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Set Reminder'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        children: options.entries.map((entry) => SimpleDialogOption(
+          onPressed: () {
+            setState(() {
+              _reminderLeadMinutes = entry.key;
+            });
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(entry.value, style: const TextStyle(fontSize: 16)),
+                if (_reminderLeadMinutes == entry.key) const Icon(Icons.check, color: Colors.purple),
+              ],
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  // NEW: Helper to display the reminder chip text
+  String _getReminderText() {
+    switch (_reminderLeadMinutes) {
+      case 0: return 'At time of task';
+      case 5: return '5 min before';
+      case 15: return '15 min before';
+      case 30: return '30 min before';
+      case 60: return '1 hour before';
+      default: return '';
     }
   }
 
@@ -218,6 +322,14 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       }
     }
 
+    // Fallback: if they set a reminder but didn't set a time, remind them
+    if (_reminderLeadMinutes != null && finalStartTime == null && _scheduledDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please set a date or time for the alarm to trigger.')),
+      );
+      return;
+    }
+
     final isEditing = widget.existingTask != null;
     final task = TaskEntity(
       id: isEditing ? widget.existingTask!.id : DateTime.now().millisecondsSinceEpoch.toString(),
@@ -229,6 +341,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       scheduledAt: _scheduledDate,
       startTime: finalStartTime,
       endTime: finalEndTime,
+      reminderLeadMinutes: _reminderLeadMinutes, // NEW: Inject user's choice here
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -289,6 +402,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                     _scheduledDate = null;
                     _startTime = null;
                     _endTime = null;
+                    _reminderLeadMinutes = null; // Clear alarm if date is cleared
                   }),
                 ),
               if (_startTime != null && _endTime != null)
@@ -297,9 +411,9 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                   onDeleted: () => setState(() {
                     _startTime = null;
                     _endTime = null;
+                    _reminderLeadMinutes = null; // FIXED: This clears the alarm if the time block is deleted!
                   }),
                 ),
-              // Show Priority if it's explicitly modified OR not the default
               if (_hasModifiedPriority || _priority != TaskPriority.medium)
                 InputChip(
                   avatar: const Icon(Icons.flag, size: 16, color: Colors.deepOrange),
@@ -307,10 +421,9 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                   onPressed: _pickPriority,
                   onDeleted: () => setState(() {
                     _priority = TaskPriority.medium;
-                    _hasModifiedPriority = false; // Hide it again on delete
+                    _hasModifiedPriority = false;
                   }),
                 ),
-              // Show Category if it's explicitly modified OR not the default
               if (_hasModifiedCategory || _category != TaskCategory.personal)
                 InputChip(
                   avatar: const Icon(Icons.folder_outlined, size: 16, color: Colors.blue),
@@ -318,7 +431,17 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                   onPressed: _pickCategory,
                   onDeleted: () => setState(() {
                     _category = TaskCategory.personal;
-                    _hasModifiedCategory = false; // Hide it again on delete
+                    _hasModifiedCategory = false;
+                  }),
+                ),
+              // NEW: Show Reminder Chip if one is selected
+              if (_reminderLeadMinutes != null)
+                InputChip(
+                  avatar: const Icon(Icons.notifications_active, size: 16, color: Colors.purple),
+                  label: Text(_getReminderText()),
+                  onPressed: _pickReminderSafe,
+                  onDeleted: () => setState(() {
+                    _reminderLeadMinutes = null;
                   }),
                 ),
             ],
@@ -353,6 +476,15 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                 icon: Icon(Icons.folder_outlined, color: _category != TaskCategory.personal ? Colors.blue : null),
                 tooltip: 'Set Category',
                 onPressed: _pickCategory,
+              ),
+              // NEW: The Alarm Icon Button
+              IconButton(
+                icon: Icon(
+                    _reminderLeadMinutes != null ? Icons.notifications_active : Icons.notifications_none,
+                    color: _reminderLeadMinutes != null ? Colors.purple : null
+                ),
+                tooltip: 'Set Reminder',
+                onPressed: _pickReminderSafe,
               ),
               const Spacer(),
               TextButton(

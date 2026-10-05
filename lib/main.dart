@@ -6,16 +6,23 @@ import 'core/theme/app_theme.dart';
 import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
 import 'core/services/overdue_checker_service.dart';
+// NEW: Import the notification service
+import 'core/services/notification_service.dart';
 import 'features/tasks/presentation/bloc/task_bloc.dart';
 import 'features/tasks/presentation/bloc/task_event.dart';
 
-// NEW: Global ValueNotifier to easily toggle themes from anywhere
-final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark); // Defaulting to dark mode to match your vibe!
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
 
 late final AppLifecycleListener _lifecycleListener;
 
-void main() {
+// CHANGED: Added 'async' here
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // NEW: Initialize notifications and ask for permissions before doing anything else
+  await NotificationService().init();
+  await NotificationService().requestPermissions();
+
   configureDependencies();
   GetIt.I<OverdueCheckerService>().checkNow();
 
@@ -35,7 +42,6 @@ class SolaceApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => GetIt.I<TaskBloc>()..add(WatchTasksEvent()),
-      // NEW: ValueListenableBuilder listens to themeNotifier and rebuilds the app when changed
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: themeNotifier,
         builder: (_, ThemeMode currentMode, __) {

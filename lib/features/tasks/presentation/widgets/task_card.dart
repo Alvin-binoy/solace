@@ -102,6 +102,11 @@ class TaskCard extends StatelessWidget {
                  color: mutedTextColor,
                 ),
                ),
+               // NEW: Active Alarm Indicator
+               if (task.reminderLeadMinutes != null && !isCompleted) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.notifications_active, size: 12, color: Colors.purple),
+               ],
               ],
              ),
             ],
