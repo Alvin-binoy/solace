@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart'; // NEW: For formatting the alarm time
 import '../../../../main.dart';
 import '../widgets/task_input_bottom_sheet.dart';
 import '../../../../core/enums/task_status.dart';
 import '../../../../core/router/route_names.dart';
+import '../../domain/entities/task_entity.dart'; // NEW: Required for the active tasks list
 import '../bloc/task_bloc.dart';
 import '../bloc/task_event.dart';
 import '../bloc/task_state.dart';
@@ -20,6 +22,45 @@ class DashboardPage extends StatelessWidget {
         title: const Text('DASHBOARD'),
         automaticallyImplyLeading: false,
         actions: [
+          // NEW: In-App Notification Center Bell
+          // NEW: In-App Notification Center Bell
+          BlocBuilder<TaskBloc, TaskState>(
+            builder: (context, state) {
+              int activeAlarmsCount = 0;
+              List<TaskEntity> activeAlarmTasks = [];
+
+              if (state is TaskLoaded) {
+                final now = DateTime.now();
+
+                // Filter only pending tasks with a future reminder
+                activeAlarmTasks = state.tasks.where((t) {
+                  if (t.status == TaskStatus.completed || t.reminderLeadMinutes == null || t.startTime == null) {
+                    return false;
+                  }
+                  // Calculate exact ring time
+                  final ringTime = t.startTime!.subtract(Duration(minutes: t.reminderLeadMinutes!));
+
+                  // ONLY keep it if the ring time hasn't passed yet
+                  return ringTime.isAfter(now);
+                }).toList();
+
+                activeAlarmsCount = activeAlarmTasks.length;
+              }
+
+              return IconButton(
+                icon: Badge(
+                  isLabelVisible: activeAlarmsCount > 0,
+                  label: Text(activeAlarmsCount.toString()),
+                  child: const Icon(Icons.notifications_outlined),
+                ),
+                tooltip: 'Active Alarms',
+                onPressed: () {
+                  _showNotificationCenter(context, activeAlarmTasks);
+                },
+              );
+            },
+          ),
+
           ValueListenableBuilder<ThemeMode>(
             valueListenable: themeNotifier,
             builder: (context, currentMode, _) {
@@ -56,7 +97,6 @@ class DashboardPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Row(
                     children: [
-                      // Removed topLabel arguments
                       _StatCard(title: 'Pending', count: pending),
                       const SizedBox(width: 8),
                       _StatCard(title: 'Overdue', count: overdue),
@@ -137,12 +177,11 @@ class DashboardPage extends StatelessWidget {
           return const SizedBox.shrink();
         },
       ),
-      // We wrap it in a Padding widget to lift it above the custom bottom nav bar
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80.0),
         child: FloatingActionButton(
           onPressed: () => TaskInputBottomSheet.show(context),
-          backgroundColor: Theme.of(context).colorScheme.onSurface, // Invert colors for high contrast
+          backgroundColor: Theme.of(context).colorScheme.onSurface,
           foregroundColor: Theme.of(context).colorScheme.surface,
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -151,9 +190,81 @@ class DashboardPage extends StatelessWidget {
       ),
     );
   }
+
+  // NEW: Bottom Sheet for the Notification Center
+  void _showNotificationCenter(BuildContext context, List<TaskEntity> activeTasks) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return FractionallySizedBox(
+          heightFactor: 0.5,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.notifications_active, color: Colors.purple),
+                    SizedBox(width: 8),
+                    Text(
+                      'Upcoming Reminders',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (activeTasks.isEmpty)
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        'No active alarms set.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: activeTasks.length,
+                      itemBuilder: (context, index) {
+                        final task = activeTasks[index];
+
+                        // Calculate exact time the alarm rings
+                        String alarmText = 'Alarm set';
+                        if (task.startTime != null && task.reminderLeadMinutes != null) {
+                          final ringTime = task.startTime!.subtract(Duration(minutes: task.reminderLeadMinutes!));
+                          alarmText = 'Rings at ${DateFormat('MMM d, h:mm a').format(ringTime)}';
+                        }
+
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(task.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          subtitle: Text(alarmText, style: const TextStyle(color: Colors.purple, fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                          onTap: () {
+                            Navigator.pop(context); // Close sheet
+                            // Open task for editing
+                            TaskInputBottomSheet.show(context, existingTask: task);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
-// Cleaned up _StatCard with topLabel removed entirely
 class _StatCard extends StatelessWidget {
   final String title;
   final int count;
