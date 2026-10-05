@@ -33,17 +33,24 @@ class TaskCard extends StatelessWidget {
  @override
  Widget build(BuildContext context) {
   final isCompleted = task.status == TaskStatus.completed;
+  final isOverdue = task.status == TaskStatus.overdue; // NEW: Check if overdue
   final scheduleText = _getScheduleText();
 
-  final textColor = Theme.of(context).colorScheme.onSurface;
+  final baseTextColor = Theme.of(context).colorScheme.onSurface;
   final mutedTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+
+  // NEW: Determine exact text color based on status
+  final textColor = isCompleted
+      ? mutedTextColor
+      : isOverdue
+      ? Colors.red.shade400
+      : baseTextColor;
 
   return Card(
    child: InkWell(
     borderRadius: BorderRadius.circular(16),
     onTap: onTap,
     child: Padding(
-     // COMPACT: Reduced padding from 16 to 12
      padding: const EdgeInsets.all(12.0),
      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,20 +58,22 @@ class TaskCard extends StatelessWidget {
        Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         // COMPACT: Constraining the checkbox size so it doesn't add hidden padding
          SizedBox(
           height: 24,
           width: 24,
           child: Checkbox(
            value: isCompleted,
            onChanged: onStatusChanged,
-           activeColor: textColor,
+           activeColor: baseTextColor,
            checkColor: Theme.of(context).colorScheme.surface,
            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-           side: BorderSide(color: mutedTextColor, width: 1.5),
+           side: BorderSide(
+               color: isOverdue ? Colors.red.shade400 : mutedTextColor, // Red box if overdue
+               width: 1.5
+           ),
           ),
          ),
-         const SizedBox(width: 10), // Tighter spacing
+         const SizedBox(width: 10),
 
          // Task Title & Schedule
          Expanded(
@@ -74,35 +83,38 @@ class TaskCard extends StatelessWidget {
             Text(
              task.title,
              style: TextStyle(
-              fontSize: 16, // COMPACT: Reduced from 18
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               decoration: isCompleted ? TextDecoration.lineThrough : null,
-              color: isCompleted ? mutedTextColor : textColor,
+              color: textColor, // Applies red if overdue
               height: 1.2,
              ),
             ),
             if (task.description.isNotEmpty) ...[
-             const SizedBox(height: 2), // Tighter spacing
+             const SizedBox(height: 2),
              Text(
               task.description,
               style: TextStyle(fontSize: 13, color: mutedTextColor),
              ),
             ],
             if (scheduleText != null) ...[
-             const SizedBox(height: 4), // Tighter spacing
+             const SizedBox(height: 4),
              Row(
               children: [
-               Icon(Icons.schedule, size: 12, color: mutedTextColor),
+               Icon(
+                   Icons.schedule,
+                   size: 12,
+                   color: isOverdue ? Colors.red.shade400 : mutedTextColor // Red clock if overdue
+               ),
                const SizedBox(width: 4),
                Text(
                 scheduleText,
                 style: TextStyle(
-                 fontSize: 11, // COMPACT: Reduced from 12
+                 fontSize: 11,
                  fontWeight: FontWeight.w600,
-                 color: mutedTextColor,
+                 color: isOverdue ? Colors.red.shade400 : mutedTextColor, // Red time if overdue
                 ),
                ),
-               // NEW: Active Alarm Indicator
                if (task.reminderLeadMinutes != null && !isCompleted) ...[
                 const SizedBox(width: 6),
                 const Icon(Icons.notifications_active, size: 12, color: Colors.purple),
@@ -114,33 +126,37 @@ class TaskCard extends StatelessWidget {
           ),
          ),
 
-         // Sleek Monochrome Priority Pill
+         // Priority Pill
          Container(
           margin: const EdgeInsets.only(left: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // Tighter padding
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
            color: Colors.transparent,
            borderRadius: BorderRadius.circular(10),
-           border: Border.all(color: mutedTextColor.withOpacity(0.3)),
+           border: Border.all(
+               color: isOverdue
+                   ? Colors.red.shade400
+                   : mutedTextColor.withOpacity(0.3)
+           ), // Red border if overdue
           ),
           child: Text(
            task.priority.name.toUpperCase(),
            style: TextStyle(
-            fontSize: 9, // COMPACT: Reduced from 10
+            fontSize: 9,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,
-            color: isCompleted ? mutedTextColor : textColor,
+            color: isCompleted ? mutedTextColor : baseTextColor,
            ),
           ),
          ),
         ],
        ),
 
-       const SizedBox(height: 10), // Tighter spacing
+       const SizedBox(height: 10),
        Divider(height: 1, color: mutedTextColor.withOpacity(0.2)),
-       const SizedBox(height: 8), // Tighter spacing
+       const SizedBox(height: 8),
 
-       // Sleek Monochrome Category Label
+       // Category Label
        Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -149,7 +165,7 @@ class TaskCard extends StatelessWidget {
          Text(
           task.category.name.toUpperCase(),
           style: TextStyle(
-           fontSize: 10, // COMPACT: Reduced from 11
+           fontSize: 10,
            fontWeight: FontWeight.w700,
            letterSpacing: 0.5,
            color: mutedTextColor,

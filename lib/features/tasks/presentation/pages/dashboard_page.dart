@@ -216,7 +216,23 @@ class DashboardPage extends StatelessWidget {
       child: TaskCard(
         task: task,
         onStatusChanged: (value) {
-          final newStatus = (value == true) ? TaskStatus.completed : TaskStatus.pending;
+          TaskStatus newStatus;
+          if (value == true) {
+            newStatus = TaskStatus.completed;
+          } else {
+            // Smart check: If unchecked, evaluate if the time has already passed
+            final now = DateTime.now();
+            bool isOverdue = false;
+
+            if (task.endTime != null && task.endTime!.isBefore(now)) {
+              isOverdue = true;
+            } else if (task.endTime == null && task.deadline != null && task.deadline!.isBefore(now)) {
+              isOverdue = true;
+            }
+
+            newStatus = isOverdue ? TaskStatus.overdue : TaskStatus.pending;
+          }
+
           context.read<TaskBloc>().add(UpdateTaskEvent(task.copyWith(status: newStatus)));
         },
         onTap: () => TaskInputBottomSheet.show(context, existingTask: task),

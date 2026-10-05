@@ -339,9 +339,11 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       category: _category,
       status: isEditing ? widget.existingTask!.status : TaskStatus.pending,
       scheduledAt: _scheduledDate,
+      // FIXED: Actually save the scheduledDate as the general deadline!
+      deadline: _scheduledDate,
       startTime: finalStartTime,
       endTime: finalEndTime,
-      reminderLeadMinutes: _reminderLeadMinutes, // NEW: Inject user's choice here
+      reminderLeadMinutes: _reminderLeadMinutes,
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
     );

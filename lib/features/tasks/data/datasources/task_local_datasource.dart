@@ -38,14 +38,19 @@ class TaskLocalDatasourceImpl implements TaskLocalDatasource {
     return (_db.delete(_db.tasks)..where((t) => t.id.equals(id))).go();
   }
 
-  // NEW: The actual database command that updates everything instantly
+  // FIXED: Now checks exact endTime if it exists, falling back to deadline if not
   @override
   Future<void> markOverdueTasks() async {
     final now = DateTime.now();
 
     await (_db.update(_db.tasks)
-      ..where((t) => t.deadline.isSmallerThanValue(now))
-      ..where((t) => t.status.equals(TaskStatus.pending.name)))
+      ..where((t) => t.status.equals(TaskStatus.pending.name))
+      ..where((t) =>
+      // 1. If it has an exact end time, check if it has passed
+      (t.endTime.isNotNull() & t.endTime.isSmallerThanValue(now)) |
+      // 2. If it has no end time, check if the general deadline has passed
+      (t.endTime.isNull() & t.deadline.isNotNull() & t.deadline.isSmallerThanValue(now))
+      ))
         .write(
       TasksCompanion(
         status: const Value(TaskStatus.overdue),

@@ -36,18 +36,14 @@ class _TaskListViewState extends State<_TaskListView> {
   TaskFilterCategory _activeFilter = TaskFilterCategory.all;
 
   List<TaskEntity> _filterTasks(List<TaskEntity> tasks) {
-    final now = DateTime.now();
     switch (_activeFilter) {
       case TaskFilterCategory.pending:
         return tasks.where((t) => t.status == TaskStatus.pending).toList();
       case TaskFilterCategory.completed:
         return tasks.where((t) => t.status == TaskStatus.completed).toList();
       case TaskFilterCategory.overdue:
-        return tasks.where((t) {
-          return t.status == TaskStatus.pending &&
-              t.deadline != null &&
-              t.deadline!.isBefore(now);
-        }).toList();
+      // FIXED: The database already marks them overdue, just filter by status!
+        return tasks.where((t) => t.status == TaskStatus.overdue).toList();
       case TaskFilterCategory.all:
         return tasks;
     }
@@ -182,12 +178,24 @@ class _TaskListViewState extends State<_TaskListView> {
                         child: TaskCard(
                           task: task,
                           onStatusChanged: (value) {
-                            final newStatus = (value == true)
-                                ? TaskStatus.completed
-                                : TaskStatus.pending;
-                            context
-                                .read<TaskBloc>()
-                                .add(UpdateTaskEvent(task.copyWith(status: newStatus)));
+                            TaskStatus newStatus;
+                            if (value == true) {
+                              newStatus = TaskStatus.completed;
+                            } else {
+                              // Smart check: If unchecked, evaluate if the time has already passed
+                              final now = DateTime.now();
+                              bool isOverdue = false;
+
+                              if (task.endTime != null && task.endTime!.isBefore(now)) {
+                                isOverdue = true;
+                              } else if (task.endTime == null && task.deadline != null && task.deadline!.isBefore(now)) {
+                                isOverdue = true;
+                              }
+
+                              newStatus = isOverdue ? TaskStatus.overdue : TaskStatus.pending;
+                            }
+
+                            context.read<TaskBloc>().add(UpdateTaskEvent(task.copyWith(status: newStatus)));
                           },
                           onTap: () => TaskInputBottomSheet.show(context, existingTask: task),
                         ),
