@@ -33,18 +33,14 @@ class TaskCard extends StatelessWidget {
  @override
  Widget build(BuildContext context) {
   final isCompleted = task.status == TaskStatus.completed;
-  final isOverdue = task.status == TaskStatus.overdue; // NEW: Check if overdue
+  final isOverdue = task.status == TaskStatus.overdue;
   final scheduleText = _getScheduleText();
 
   final baseTextColor = Theme.of(context).colorScheme.onSurface;
   final mutedTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
 
-  // NEW: Determine exact text color based on status
-  final textColor = isCompleted
-      ? mutedTextColor
-      : isOverdue
-      ? Colors.red.shade400
-      : baseTextColor;
+  // Title color is back to normal (only grayed out if completed)
+  final textColor = isCompleted ? mutedTextColor : baseTextColor;
 
   return Card(
    child: InkWell(
@@ -68,7 +64,7 @@ class TaskCard extends StatelessWidget {
            checkColor: Theme.of(context).colorScheme.surface,
            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
            side: BorderSide(
-               color: isOverdue ? Colors.red.shade400 : mutedTextColor, // Red box if overdue
+               color: mutedTextColor, // Back to normal
                width: 1.5
            ),
           ),
@@ -86,7 +82,7 @@ class TaskCard extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w700,
               decoration: isCompleted ? TextDecoration.lineThrough : null,
-              color: textColor, // Applies red if overdue
+              color: textColor, // Back to normal
               height: 1.2,
              ),
             ),
@@ -104,7 +100,7 @@ class TaskCard extends StatelessWidget {
                Icon(
                    Icons.schedule,
                    size: 12,
-                   color: isOverdue ? Colors.red.shade400 : mutedTextColor // Red clock if overdue
+                   color: mutedTextColor // Back to normal
                ),
                const SizedBox(width: 4),
                Text(
@@ -112,7 +108,7 @@ class TaskCard extends StatelessWidget {
                 style: TextStyle(
                  fontSize: 11,
                  fontWeight: FontWeight.w600,
-                 color: isOverdue ? Colors.red.shade400 : mutedTextColor, // Red time if overdue
+                 color: mutedTextColor, // Back to normal
                 ),
                ),
                if (task.reminderLeadMinutes != null && !isCompleted) ...[
@@ -126,18 +122,18 @@ class TaskCard extends StatelessWidget {
           ),
          ),
 
-         // Priority Pill
+         // Priority Pill - THIS IS NOW THE ONLY RED ELEMENT
          Container(
           margin: const EdgeInsets.only(left: 8),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-           color: Colors.transparent,
+           color: isOverdue ? Colors.red.shade400 : Colors.transparent, // Solid red background if overdue
            borderRadius: BorderRadius.circular(10),
            border: Border.all(
                color: isOverdue
                    ? Colors.red.shade400
                    : mutedTextColor.withOpacity(0.3)
-           ), // Red border if overdue
+           ),
           ),
           child: Text(
            task.priority.name.toUpperCase(),
@@ -145,7 +141,7 @@ class TaskCard extends StatelessWidget {
             fontSize: 9,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,
-            color: isCompleted ? mutedTextColor : baseTextColor,
+            color: isOverdue ? Colors.white : (isCompleted ? mutedTextColor : baseTextColor), // White text if overdue
            ),
           ),
          ),

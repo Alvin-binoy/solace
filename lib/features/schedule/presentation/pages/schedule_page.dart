@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// If you placed daily_schedule_page.dart directly in lib/features/schedule/, use this import:
 import '../../daily_schedule_page.dart';
 
 class SchedulePage extends StatelessWidget {
@@ -11,9 +10,12 @@ class SchedulePage extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Schedule'),
+          toolbarHeight: 40, // COMPACT: Reduces the empty space above tabs
+          title: const Text('Schedule', style: TextStyle(fontSize: 25)),
           automaticallyImplyLeading: false,
           bottom: const TabBar(
+            dividerColor: Colors.transparent, // Removes standard thick underline
+            labelPadding: EdgeInsets.zero,
             tabs: [
               Tab(text: 'Daily'),
               Tab(text: 'Weekly'),
@@ -22,10 +24,7 @@ class SchedulePage extends StatelessWidget {
         ),
         body: const TabBarView(
           children: [
-            // This now loads your new timeline UI!
             DailySchedulePage(),
-
-            // Weekly view placeholder
             Center(
               child: Text(
                 'Weekly View\n(Coming in Stage 7)',

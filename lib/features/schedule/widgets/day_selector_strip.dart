@@ -16,8 +16,6 @@ class DaySelectorStrip extends StatelessWidget {
     return BlocBuilder<ScheduleBloc, ScheduleState>(
       builder: (context, state) {
         final today = DateTime.now();
-
-        // NEW: Create a 2-year window (365 days in the past, 365 in the future)
         const int pastDays = 365;
         const int futureDays = 365;
         const int totalDays = pastDays + futureDays;
@@ -30,11 +28,12 @@ class DaySelectorStrip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 12.0, bottom: 4.0),
+              // COMPACT: Stripped out the 12px top padding
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 4.0, bottom: 0.0),
               child: Text(
                 '$selectedMonth $selectedYear',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16, // COMPACT: Shrunk slightly to fit tighter
                   fontWeight: FontWeight.bold,
                   color: textColor,
                   letterSpacing: 0.5,
@@ -42,27 +41,22 @@ class DaySelectorStrip extends StatelessWidget {
               ),
             ),
             SizedBox(
-              height: 80,
+              height: 64, // COMPACT: Reduced container height from 80 to 64
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                // NEW: Calculate the starting scroll offset so "Today" appears on the left side of the screen
-                // Each standard item is 68px wide (60 width + 8 horizontal margin)
                 controller: ScrollController(initialScrollOffset: (pastDays - 0.5) * 68.0),
                 itemCount: totalDays,
                 itemBuilder: (context, index) {
-                  // NEW: Calculate the date relative to our 365-day past offset
                   final date = today.subtract(const Duration(days: pastDays)).add(Duration(days: index));
-
                   final isSelected = _isSameDay(date, state.selectedDate);
                   final isToday = _isSameDay(date, today);
                   final dayLabel = isToday ? 'TODAY' : _getWeekday(date.weekday).toUpperCase();
 
-                  // FIX: Ensure 'TODAY' uses a highly visible text color in both dark and light modes
                   Color labelColor;
                   if (isSelected) {
                     labelColor = activeTextColor;
                   } else if (isToday) {
-                    labelColor = textColor; // Swapped from primaryColor to guarantee visibility
+                    labelColor = textColor;
                   } else {
                     labelColor = mutedTextColor;
                   }
@@ -73,7 +67,8 @@ class DaySelectorStrip extends StatelessWidget {
                     },
                     child: Container(
                       width: isToday ? 68 : 60,
-                      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      // COMPACT: Smashed the vertical margin down from 8 to 4
+                      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                       decoration: BoxDecoration(
                         color: isSelected ? activeBgColor : Colors.transparent,
                         borderRadius: BorderRadius.circular(16),
@@ -91,12 +86,12 @@ class DaySelectorStrip extends StatelessWidget {
                               letterSpacing: 0.5,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2), // COMPACT: Reduced from 4
                           Text(
                             '${date.day}',
                             style: TextStyle(
                               color: isSelected ? activeTextColor : textColor,
-                              fontSize: 20,
+                              fontSize: 18, // COMPACT: Reduced from 20
                               fontWeight: FontWeight.w900,
                             ),
                           ),
