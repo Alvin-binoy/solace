@@ -1,5 +1,5 @@
-// dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 // **************************************************************************
 // InjectableConfigGenerator
@@ -13,6 +13,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:solace/core/database/app_database.dart' as _i844;
+import 'package:solace/core/database/daos/journal_dao.dart' as _i57;
 import 'package:solace/core/di/external_module.dart' as _i951;
 import 'package:solace/core/services/overdue_checker_service.dart' as _i546;
 import 'package:solace/features/auth/data/datasources/secure_storage_datasource.dart'
@@ -30,6 +31,24 @@ import 'package:solace/features/auth/domain/use_cases/setup_pin_use_case.dart'
 import 'package:solace/features/auth/domain/use_cases/verify_pin_use_case.dart'
     as _i834;
 import 'package:solace/features/auth/presentation/bloc/auth_bloc.dart' as _i601;
+import 'package:solace/features/journal/data/datasources/journal_local_datasource.dart'
+    as _i220;
+import 'package:solace/features/journal/data/repositories/journal_repository_impl.dart'
+    as _i445;
+import 'package:solace/features/journal/domain/repositories/journal_repository.dart'
+    as _i924;
+import 'package:solace/features/journal/domain/use_cases/add_entry_use_case.dart'
+    as _i949;
+import 'package:solace/features/journal/domain/use_cases/delete_entry_use_case.dart'
+    as _i382;
+import 'package:solace/features/journal/domain/use_cases/get_entry_by_id_use_case.dart'
+    as _i972;
+import 'package:solace/features/journal/domain/use_cases/update_entry_use_case.dart'
+    as _i767;
+import 'package:solace/features/journal/domain/use_cases/watch_all_entries_use_case.dart'
+    as _i811;
+import 'package:solace/features/journal/presentation/bloc/journal_bloc.dart'
+    as _i159;
 import 'package:solace/features/tasks/data/datasources/task_local_datasource.dart'
     as _i493;
 import 'package:solace/features/tasks/data/repositories/task_repository_impl.dart'
@@ -64,6 +83,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i571.SecureStorageDatasource>(
       () => _i571.SecureStorageDatasourceImpl(gh<_i558.FlutterSecureStorage>()),
+    );
+    gh.lazySingleton<_i57.JournalDao>(
+      () => _i57.JournalDao(gh<_i844.AppDatabase>()),
     );
     gh.factory<_i558.AuthRepository>(
       () => _i37.AuthRepositoryImpl(gh<_i571.SecureStorageDatasource>()),
@@ -107,12 +129,41 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i558.AuthRepository>(),
       ),
     );
+    gh.lazySingleton<_i220.JournalLocalDatasource>(
+      () => _i220.JournalLocalDatasourceImpl(gh<_i57.JournalDao>()),
+    );
     gh.factory<_i154.TaskBloc>(
       () => _i154.TaskBloc(
         gh<_i1000.WatchAllTasksUseCase>(),
         gh<_i635.AddTaskUseCase>(),
         gh<_i111.UpdateTaskUseCase>(),
         gh<_i847.DeleteTaskUseCase>(),
+      ),
+    );
+    gh.factory<_i924.JournalRepository>(
+      () => _i445.JournalRepositoryImpl(gh<_i220.JournalLocalDatasource>()),
+    );
+    gh.factory<_i949.AddEntryUseCase>(
+      () => _i949.AddEntryUseCase(gh<_i924.JournalRepository>()),
+    );
+    gh.factory<_i382.DeleteEntryUseCase>(
+      () => _i382.DeleteEntryUseCase(gh<_i924.JournalRepository>()),
+    );
+    gh.factory<_i972.GetEntryByIdUseCase>(
+      () => _i972.GetEntryByIdUseCase(gh<_i924.JournalRepository>()),
+    );
+    gh.factory<_i767.UpdateEntryUseCase>(
+      () => _i767.UpdateEntryUseCase(gh<_i924.JournalRepository>()),
+    );
+    gh.factory<_i811.WatchAllEntriesUseCase>(
+      () => _i811.WatchAllEntriesUseCase(gh<_i924.JournalRepository>()),
+    );
+    gh.factory<_i159.JournalBloc>(
+      () => _i159.JournalBloc(
+        gh<_i811.WatchAllEntriesUseCase>(),
+        gh<_i949.AddEntryUseCase>(),
+        gh<_i767.UpdateEntryUseCase>(),
+        gh<_i382.DeleteEntryUseCase>(),
       ),
     );
     return this;

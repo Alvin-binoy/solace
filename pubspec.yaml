@@ -50,7 +50,7 @@ dependencies:
   # UI & Formatting
   table_calendar: any
   fl_chart: any
-  flutter_quill: any
+  flutter_quill: ^11.6.0
   reactive_forms: any
   omni_datetime_picker: any
   intl: any
@@ -59,7 +59,7 @@ dependencies:
 
   # Utilities & Functional Programming
   fpdart: any
-  uuid: any
+  uuid: ^4.6.0
   path_provider: any
   path: ^1.9.0
   crypto: ^3.0.3

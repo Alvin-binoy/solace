@@ -1,0 +1,1 @@
+enum Mood { awful, bad, neutral, good, great }
