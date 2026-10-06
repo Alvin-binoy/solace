@@ -68,8 +68,8 @@ class JournalPage extends StatelessWidget {
                     child: JournalCard(
                       entry: entry,
                       onTap: () {
-                        // Navigate to the editor in "Edit" mode
-                        context.push('/journal-entry', extra: entry);
+                        // Navigate to the new read-only view instead of the editor
+                        context.push('/journal-view/${entry.id}');
                       },
                     ),
                   );

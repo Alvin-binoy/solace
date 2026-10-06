@@ -11,8 +11,10 @@ import '../../features/tasks/presentation/pages/create_edit_task_page.dart';
 import '../../features/schedule/presentation/pages/schedule_page.dart';
 import '../../features/journal/presentation/pages/journal_page.dart';
 import '../../features/journal/presentation/pages/journal_entry_page.dart';
+import '../../features/journal/presentation/pages/journal_view_page.dart'; // NEW
 import '../../features/journal/domain/entities/journal_entry_entity.dart';
 import '../../features/journal/presentation/bloc/journal_bloc.dart';
+import '../../features/journal/presentation/bloc/journal_event.dart'; // NEW
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import 'main_shell.dart';
 import 'route_names.dart';
@@ -61,7 +63,7 @@ final GoRouter appRouter = GoRouter(
       path: RouteNames.taskCreate,
       builder: (context, state) => const CreateEditTaskPage(),
     ),
-    // FIXED: Added BlocProvider to inject the BLoC into the full-screen route
+    // Editor Page
     GoRoute(
       path: '/journal-entry',
       builder: (context, state) {
@@ -69,6 +71,17 @@ final GoRouter appRouter = GoRouter(
         return BlocProvider(
           create: (context) => GetIt.I<JournalBloc>(),
           child: JournalEntryPage(existingEntry: entry),
+        );
+      },
+    ),
+    // NEW: Read-Only View Page
+    GoRoute(
+      path: '/journal-view/:id',
+      builder: (context, state) {
+        final entryId = state.pathParameters['id']!;
+        return BlocProvider(
+          create: (context) => GetIt.I<JournalBloc>()..add(WatchEntriesEvent()),
+          child: JournalViewPage(entryId: entryId),
         );
       },
     ),
