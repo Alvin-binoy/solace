@@ -28,6 +28,9 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   List<String> _tags = [];
   final TextEditingController _tagController = TextEditingController();
 
+  // NEW: State variable to track toolbar visibility
+  bool _showToolbar = true;
+
   @override
   void initState() {
     super.initState();
@@ -120,6 +123,16 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
       appBar: AppBar(
         title: Text(widget.existingEntry == null ? 'New Entry' : 'Edit Entry'),
         actions: [
+          // NEW: Toggle Toolbar Button
+          IconButton(
+            icon: Icon(_showToolbar ? Icons.keyboard_arrow_up : Icons.text_format),
+            tooltip: 'Toggle formatting toolbar',
+            onPressed: () {
+              setState(() {
+                _showToolbar = !_showToolbar;
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: _saveEntry,
@@ -129,11 +142,25 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
       ),
       body: Column(
         children: [
-          // FIXED: Updated syntax for flutter_quill v11+
-          quill.QuillSimpleToolbar(
-            controller: _quillController,
+          // NEW: AnimatedSize makes the collapse/expand perfectly smooth
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOutCubic,
+            child: _showToolbar
+                ? Column(
+              children: [
+                quill.QuillSimpleToolbar(
+                  controller: _quillController,
+                  config: const quill.QuillSimpleToolbarConfig(
+                    // Forces the toolbar into a single scrollable row
+                    multiRowsDisplay: false,
+                  ),
+                ),
+                Divider(height: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+              ],
+            )
+                : const SizedBox.shrink(),
           ),
-          Divider(height: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
 
           Expanded(
             child: SingleChildScrollView(
@@ -159,7 +186,6 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // FIXED: Updated syntax for flutter_quill v11+
                   Container(
                     constraints: const BoxConstraints(minHeight: 200),
                     child: quill.QuillEditor.basic(
@@ -173,7 +199,6 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      // FIXED: Replaced .withOpacity to satisfy deprecation warnings
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
@@ -185,7 +210,6 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
                       ..._tags.map((tag) => Chip(
                         label: Text('#$tag'),
                         onDeleted: () => _removeTag(tag),
-                        // FIXED: Replaced .withOpacity to satisfy deprecation warnings
                         backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         deleteIconColor: Theme.of(context).colorScheme.primary,
                         side: BorderSide.none,
