@@ -197,7 +197,8 @@ class _CalendarViewState extends State<_CalendarView> {
                     ),
                   )
                       : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    // Adds 100 pixels of empty space at the bottom so you can scroll past the nav bar
+                    padding: const EdgeInsets.only(top: 16.0, bottom: 100.0),
                     itemCount: state.selectedDayEvents.length,
                     itemBuilder: (context, index) {
                       final event = state.selectedDayEvents[index];
