@@ -197,7 +197,7 @@ class _CalendarViewState extends State<_CalendarView> {
                     ),
                   )
                       : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                     itemCount: state.selectedDayEvents.length,
                     itemBuilder: (context, index) {
                       final event = state.selectedDayEvents[index];

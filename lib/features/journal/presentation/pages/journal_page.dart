@@ -44,7 +44,7 @@ class JournalPage extends StatelessWidget {
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
                 itemCount: entries.length,
                 itemBuilder: (context, index) {
                   final entry = entries[index];
