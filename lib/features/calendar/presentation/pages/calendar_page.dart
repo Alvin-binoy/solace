@@ -78,6 +78,8 @@ class _CalendarViewState extends State<_CalendarView> {
                   lastDay: DateTime.utc(2030, 12, 31),
                   focusedDay: _focusedDay,
                   currentDay: DateTime.now(),
+                  rowHeight: 42.0,
+                  daysOfWeekHeight: 24.0,
                   selectedDayPredicate: (day) => isSameDay(state.selectedDate, day),
 
                   // Disable week/month format toggle to keep it clean
@@ -106,6 +108,9 @@ class _CalendarViewState extends State<_CalendarView> {
                   headerStyle: HeaderStyle(
                     titleCentered: true,
                     formatButtonVisible: false,
+                    // NEW: Strips out the default white space above the month title
+                    headerPadding: EdgeInsets.zero,
+                    headerMargin: const EdgeInsets.only(bottom: 8.0), // Keeps a tiny gap below it
                     leftChevronIcon: Icon(Icons.chevron_left, color: Theme.of(context).colorScheme.onSurface),
                     rightChevronIcon: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface),
                   ),
