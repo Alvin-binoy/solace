@@ -28,7 +28,6 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   List<String> _tags = [];
   final TextEditingController _tagController = TextEditingController();
 
-  // NEW: State variable to track toolbar visibility
   bool _showToolbar = true;
 
   @override
@@ -123,7 +122,6 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
       appBar: AppBar(
         title: Text(widget.existingEntry == null ? 'New Entry' : 'Edit Entry'),
         actions: [
-          // NEW: Toggle Toolbar Button
           IconButton(
             icon: Icon(_showToolbar ? Icons.keyboard_arrow_up : Icons.text_format),
             tooltip: 'Toggle formatting toolbar',
@@ -140,99 +138,119 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // NEW: AnimatedSize makes the collapse/expand perfectly smooth
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOutCubic,
-            child: _showToolbar
-                ? Column(
-              children: [
-                quill.QuillSimpleToolbar(
-                  controller: _quillController,
-                  config: const quill.QuillSimpleToolbarConfig(
-                    // Forces the toolbar into a single scrollable row
-                    multiRowsDisplay: false,
-                  ),
-                ),
-                Divider(height: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
-              ],
-            )
-                : const SizedBox.shrink(),
-          ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          children: [
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOutCubic,
+              child: _showToolbar
+                  ? Column(
                 children: [
-                  TextField(
-                    controller: _titleController,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    decoration: const InputDecoration(
-                      hintText: 'Title...',
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                  quill.QuillSimpleToolbar(
+                    controller: _quillController,
+                    config: const quill.QuillSimpleToolbarConfig(
+                      multiRowsDisplay: false,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  Divider(height: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                ],
+              )
+                  : const SizedBox.shrink(),
+            ),
 
-                  MoodSelector(
-                    selectedMood: _selectedMood,
-                    onMoodSelected: (mood) => setState(() => _selectedMood = mood),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Container(
-                    constraints: const BoxConstraints(minHeight: 200),
-                    child: quill.QuillEditor.basic(
-                      controller: _quillController,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  Text(
-                    'Tags',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ..._tags.map((tag) => Chip(
-                        label: Text('#$tag'),
-                        onDeleted: () => _removeTag(tag),
-                        backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        deleteIconColor: Theme.of(context).colorScheme.primary,
-                        side: BorderSide.none,
-                      )),
-                      SizedBox(
-                        width: 120,
-                        child: TextField(
-                          controller: _tagController,
-                          decoration: const InputDecoration(
-                            hintText: '+ Add tag',
-                            border: InputBorder.none,
-                            isDense: true,
-                          ),
-                          onSubmitted: _addTag,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // EDGE CASE FIXED: NestedScrollView allows the title to scroll away naturally
+                    Expanded(
+                      child: NestedScrollView(
+                        headerSliverBuilder: (context, innerBoxIsScrolled) {
+                          return [
+                            SliverToBoxAdapter(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  TextField(
+                                    controller: _titleController,
+                                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                    decoration: const InputDecoration(
+                                      hintText: 'Title...',
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  MoodSelector(
+                                    selectedMood: _selectedMood,
+                                    onMoodSelected: (mood) => setState(() => _selectedMood = mood),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Divider(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
+                            ),
+                          ];
+                        },
+                        body: quill.QuillEditor.basic(
+                          controller: _quillController,
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+
+                    // Pinned Footer (Tags stay at the bottom, above the keyboard)
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tags',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ..._tags.map((tag) => Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Chip(
+                              label: Text('#$tag'),
+                              onDeleted: () => _removeTag(tag),
+                              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                              deleteIconColor: Theme.of(context).colorScheme.primary,
+                              side: BorderSide.none,
+                            ),
+                          )),
+                          SizedBox(
+                            width: 120,
+                            child: TextField(
+                              controller: _tagController,
+                              decoration: const InputDecoration(
+                                hintText: '+ Add tag',
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                              onSubmitted: _addTag,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

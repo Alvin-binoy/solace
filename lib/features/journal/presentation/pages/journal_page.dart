@@ -50,6 +50,7 @@ class JournalPage extends StatelessWidget {
                   final entry = entries[index];
 
                   // EDGE CASE: Swipe to delete with confirmation background
+                  // EDGE CASE: Swipe to delete with confirmation background
                   return Dismissible(
                     key: Key(entry.id),
                     direction: DismissDirection.endToStart,
@@ -59,10 +60,35 @@ class JournalPage extends StatelessWidget {
                       color: Colors.red.shade400,
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
+                    // NEW: confirmDismiss added here!
+                    confirmDismiss: (direction) async {
+                      return await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Delete Entry?'),
+                            content: const Text('Are you sure you want to delete this journal entry? This cannot be undone.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false), // Cancels the swipe
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.of(context).pop(true), // Completes the delete
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                     onDismissed: (direction) {
                       context.read<JournalBloc>().add(DeleteEntryEvent(entry.id));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Entry deleted')),
+                        const SnackBar(content: const Text('Entry deleted')),
                       );
                     },
                     child: JournalCard(
