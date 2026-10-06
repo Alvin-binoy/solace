@@ -31,6 +31,8 @@ import 'package:solace/features/auth/domain/use_cases/setup_pin_use_case.dart'
 import 'package:solace/features/auth/domain/use_cases/verify_pin_use_case.dart'
     as _i834;
 import 'package:solace/features/auth/presentation/bloc/auth_bloc.dart' as _i601;
+import 'package:solace/features/calendar/presentation/bloc/calendar_bloc.dart'
+    as _i839;
 import 'package:solace/features/journal/data/datasources/journal_local_datasource.dart'
     as _i220;
 import 'package:solace/features/journal/data/repositories/journal_repository_impl.dart'
@@ -164,6 +166,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i949.AddEntryUseCase>(),
         gh<_i767.UpdateEntryUseCase>(),
         gh<_i382.DeleteEntryUseCase>(),
+      ),
+    );
+    gh.factory<_i839.CalendarBloc>(
+      () => _i839.CalendarBloc(
+        gh<_i1000.WatchAllTasksUseCase>(),
+        gh<_i811.WatchAllEntriesUseCase>(),
       ),
     );
     return this;
