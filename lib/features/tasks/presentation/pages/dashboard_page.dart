@@ -158,7 +158,7 @@ class DashboardPage extends StatelessWidget {
         },
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0),
+        padding: const EdgeInsets.only(bottom: 100.0),
         child: FloatingActionButton(
           onPressed: () => TaskInputBottomSheet.show(context),
           backgroundColor: Theme.of(context).colorScheme.onSurface,

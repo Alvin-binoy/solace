@@ -107,8 +107,8 @@ class JournalPage extends StatelessWidget {
           },
         ),
         floatingActionButton: Padding(
-          // Push the button up by 80 pixels so it clears the custom bottom nav bar
-          padding: const EdgeInsets.only(bottom: 80.0),
+          // Dynamically adds the device's bottom safe area to a base height
+          padding: EdgeInsets.only(bottom: 10.0 + MediaQuery.paddingOf(context).bottom),
           child: FloatingActionButton(
             onPressed: () => context.push('/journal-entry'),
             tooltip: 'New Entry',
@@ -140,7 +140,7 @@ class JournalPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Write down your thoughts and track your mood.',
+            'Write down your thoughts',
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),

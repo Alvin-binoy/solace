@@ -211,7 +211,7 @@ class _TaskListViewState extends State<_TaskListView> {
       ),
       // We wrap it in a Padding widget to lift it above the custom bottom nav bar
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0),
+        padding: const EdgeInsets.only(bottom: 100.0),
         child: FloatingActionButton(
           onPressed: () => TaskInputBottomSheet.show(context),
           backgroundColor: Theme.of(context).colorScheme.onSurface, // Invert colors for high contrast
