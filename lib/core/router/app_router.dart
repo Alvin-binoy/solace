@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-
+import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/setup_pin_page.dart';
 import '../../features/auth/presentation/pages/lock_screen_page.dart';
@@ -59,6 +59,10 @@ final GoRouter appRouter = GoRouter(
           child: JournalViewPage(entryId: entryId),
         );
       },
+    ),
+    GoRoute(
+      path: RouteNames.settings,
+      builder: (context, state) => const SettingsPage(),
     ),
   ],
 );

@@ -83,6 +83,8 @@ dependencies:
   google_sign_in: any
   googleapis: any
   flutter_timezone: ^5.1.1
+  encrypt: ^5.0.3
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:

@@ -8,6 +8,7 @@ import 'dart:io';
 import '../../features/tasks/data/models/task_table.dart';
 import '../../features/auth/data/models/user_profile_table.dart';
 import '../../features/journal/data/models/journal_entry_table.dart';
+import '../../features/settings/data/models/app_settings_table.dart'; // NEW
 import '../enums/task_priority.dart';
 import '../enums/task_category.dart';
 import '../enums/task_status.dart';
@@ -16,12 +17,12 @@ import '../enums/mood.dart';
 part 'app_database.g.dart';
 
 @LazySingleton()
-@DriftDatabase(tables: [Tasks, UserProfiles, JournalEntries])
+@DriftDatabase(tables: [Tasks, UserProfiles, JournalEntries, AppSettings]) // NEW: Added AppSettings
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2; // Bumped to 2 since we added a new table
 }
 
 LazyDatabase _openConnection() {

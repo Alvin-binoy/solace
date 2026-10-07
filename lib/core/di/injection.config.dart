@@ -13,8 +13,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:solace/core/database/app_database.dart' as _i844;
+import 'package:solace/core/database/daos/app_settings_dao.dart' as _i400;
 import 'package:solace/core/database/daos/journal_dao.dart' as _i57;
 import 'package:solace/core/di/external_module.dart' as _i951;
+import 'package:solace/core/services/encryption_service.dart' as _i132;
 import 'package:solace/core/services/overdue_checker_service.dart' as _i546;
 import 'package:solace/features/auth/data/datasources/secure_storage_datasource.dart'
     as _i571;
@@ -51,6 +53,24 @@ import 'package:solace/features/journal/domain/use_cases/watch_all_entries_use_c
     as _i811;
 import 'package:solace/features/journal/presentation/bloc/journal_bloc.dart'
     as _i159;
+import 'package:solace/features/settings/data/repositories/settings_repository_impl.dart'
+    as _i873;
+import 'package:solace/features/settings/data/services/export_service.dart'
+    as _i767;
+import 'package:solace/features/settings/data/services/import_service.dart'
+    as _i663;
+import 'package:solace/features/settings/domain/repositories/settings_repository.dart'
+    as _i611;
+import 'package:solace/features/settings/domain/use_cases/create_backup_use_case.dart'
+    as _i1023;
+import 'package:solace/features/settings/domain/use_cases/restore_backup_use_case.dart'
+    as _i458;
+import 'package:solace/features/settings/domain/use_cases/update_settings_use_case.dart'
+    as _i752;
+import 'package:solace/features/settings/domain/use_cases/watch_settings_use_case.dart'
+    as _i435;
+import 'package:solace/features/settings/presentation/bloc/settings_bloc.dart'
+    as _i778;
 import 'package:solace/features/tasks/data/datasources/task_local_datasource.dart'
     as _i493;
 import 'package:solace/features/tasks/data/repositories/task_repository_impl.dart'
@@ -80,17 +100,40 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.secureStorage,
     );
     gh.lazySingleton<_i844.AppDatabase>(() => _i844.AppDatabase());
+    gh.lazySingleton<_i132.EncryptionService>(() => _i132.EncryptionService());
+    gh.lazySingleton<_i767.ExportService>(
+      () => _i767.ExportService(
+        gh<_i844.AppDatabase>(),
+        gh<_i132.EncryptionService>(),
+      ),
+    );
+    gh.lazySingleton<_i663.ImportService>(
+      () => _i663.ImportService(
+        gh<_i844.AppDatabase>(),
+        gh<_i132.EncryptionService>(),
+      ),
+    );
     gh.lazySingleton<_i493.TaskLocalDatasource>(
       () => _i493.TaskLocalDatasourceImpl(gh<_i844.AppDatabase>()),
     );
     gh.lazySingleton<_i571.SecureStorageDatasource>(
       () => _i571.SecureStorageDatasourceImpl(gh<_i558.FlutterSecureStorage>()),
     );
+    gh.lazySingleton<_i400.AppSettingsDao>(
+      () => _i400.AppSettingsDao(gh<_i844.AppDatabase>()),
+    );
     gh.lazySingleton<_i57.JournalDao>(
       () => _i57.JournalDao(gh<_i844.AppDatabase>()),
     );
     gh.factory<_i558.AuthRepository>(
       () => _i37.AuthRepositoryImpl(gh<_i571.SecureStorageDatasource>()),
+    );
+    gh.factory<_i611.SettingsRepository>(
+      () => _i873.SettingsRepositoryImpl(
+        gh<_i400.AppSettingsDao>(),
+        gh<_i767.ExportService>(),
+        gh<_i663.ImportService>(),
+      ),
     );
     gh.factory<_i888.CheckAuthStatusUseCase>(
       () => _i888.CheckAuthStatusUseCase(gh<_i558.AuthRepository>()),
@@ -133,6 +176,26 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i220.JournalLocalDatasource>(
       () => _i220.JournalLocalDatasourceImpl(gh<_i57.JournalDao>()),
+    );
+    gh.factory<_i1023.CreateBackupUseCase>(
+      () => _i1023.CreateBackupUseCase(gh<_i611.SettingsRepository>()),
+    );
+    gh.factory<_i458.RestoreBackupUseCase>(
+      () => _i458.RestoreBackupUseCase(gh<_i611.SettingsRepository>()),
+    );
+    gh.factory<_i752.UpdateSettingsUseCase>(
+      () => _i752.UpdateSettingsUseCase(gh<_i611.SettingsRepository>()),
+    );
+    gh.factory<_i435.WatchSettingsUseCase>(
+      () => _i435.WatchSettingsUseCase(gh<_i611.SettingsRepository>()),
+    );
+    gh.factory<_i778.SettingsBloc>(
+      () => _i778.SettingsBloc(
+        gh<_i435.WatchSettingsUseCase>(),
+        gh<_i752.UpdateSettingsUseCase>(),
+        gh<_i1023.CreateBackupUseCase>(),
+        gh<_i458.RestoreBackupUseCase>(),
+      ),
     );
     gh.factory<_i154.TaskBloc>(
       () => _i154.TaskBloc(

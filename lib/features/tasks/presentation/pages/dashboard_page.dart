@@ -60,18 +60,10 @@ class DashboardPage extends StatelessWidget {
                 );
               }
           ),
-          ValueListenableBuilder<ThemeMode>(
-            valueListenable: themeNotifier,
-            builder: (context, currentMode, _) {
-              final isDark = currentMode == ThemeMode.dark;
-              return IconButton(
-                icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-                tooltip: 'Toggle Theme',
-                onPressed: () {
-                  themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
-                },
-              );
-            },
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => context.push('/settings'),
           ),
           const SizedBox(width: 8),
         ],

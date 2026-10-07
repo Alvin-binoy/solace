@@ -1788,12 +1788,602 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntry> {
   }
 }
 
+class $AppSettingsTable extends AppSettings
+    with TableInfo<$AppSettingsTable, AppSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _themeModeMeta = const VerificationMeta(
+    'themeMode',
+  );
+  @override
+  late final GeneratedColumn<String> themeMode = GeneratedColumn<String>(
+    'theme_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('system'),
+  );
+  static const VerificationMeta _accentColorHexMeta = const VerificationMeta(
+    'accentColorHex',
+  );
+  @override
+  late final GeneratedColumn<String> accentColorHex = GeneratedColumn<String>(
+    'accent_color_hex',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('#9E9E9E'),
+  );
+  static const VerificationMeta _dateFormatMeta = const VerificationMeta(
+    'dateFormat',
+  );
+  @override
+  late final GeneratedColumn<String> dateFormat = GeneratedColumn<String>(
+    'date_format',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('dd/MM/yyyy'),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<TaskCategory, String>
+  defaultCategory = GeneratedColumn<String>(
+    'default_category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('personal'),
+  ).withConverter<TaskCategory>($AppSettingsTable.$converterdefaultCategory);
+  static const VerificationMeta _defaultReminderLeadMinutesMeta =
+      const VerificationMeta('defaultReminderLeadMinutes');
+  @override
+  late final GeneratedColumn<int> defaultReminderLeadMinutes =
+      GeneratedColumn<int>(
+        'default_reminder_lead_minutes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(30),
+      );
+  static const VerificationMeta _quietHoursEnabledMeta = const VerificationMeta(
+    'quietHoursEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> quietHoursEnabled = GeneratedColumn<bool>(
+    'quiet_hours_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("quiet_hours_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _quietHoursStartMeta = const VerificationMeta(
+    'quietHoursStart',
+  );
+  @override
+  late final GeneratedColumn<String> quietHoursStart = GeneratedColumn<String>(
+    'quiet_hours_start',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('22:00'),
+  );
+  static const VerificationMeta _quietHoursEndMeta = const VerificationMeta(
+    'quietHoursEnd',
+  );
+  @override
+  late final GeneratedColumn<String> quietHoursEnd = GeneratedColumn<String>(
+    'quiet_hours_end',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('07:00'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    themeMode,
+    accentColorHex,
+    dateFormat,
+    defaultCategory,
+    defaultReminderLeadMinutes,
+    quietHoursEnabled,
+    quietHoursStart,
+    quietHoursEnd,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('theme_mode')) {
+      context.handle(
+        _themeModeMeta,
+        themeMode.isAcceptableOrUnknown(data['theme_mode']!, _themeModeMeta),
+      );
+    }
+    if (data.containsKey('accent_color_hex')) {
+      context.handle(
+        _accentColorHexMeta,
+        accentColorHex.isAcceptableOrUnknown(
+          data['accent_color_hex']!,
+          _accentColorHexMeta,
+        ),
+      );
+    }
+    if (data.containsKey('date_format')) {
+      context.handle(
+        _dateFormatMeta,
+        dateFormat.isAcceptableOrUnknown(data['date_format']!, _dateFormatMeta),
+      );
+    }
+    if (data.containsKey('default_reminder_lead_minutes')) {
+      context.handle(
+        _defaultReminderLeadMinutesMeta,
+        defaultReminderLeadMinutes.isAcceptableOrUnknown(
+          data['default_reminder_lead_minutes']!,
+          _defaultReminderLeadMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('quiet_hours_enabled')) {
+      context.handle(
+        _quietHoursEnabledMeta,
+        quietHoursEnabled.isAcceptableOrUnknown(
+          data['quiet_hours_enabled']!,
+          _quietHoursEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('quiet_hours_start')) {
+      context.handle(
+        _quietHoursStartMeta,
+        quietHoursStart.isAcceptableOrUnknown(
+          data['quiet_hours_start']!,
+          _quietHoursStartMeta,
+        ),
+      );
+    }
+    if (data.containsKey('quiet_hours_end')) {
+      context.handle(
+        _quietHoursEndMeta,
+        quietHoursEnd.isAcceptableOrUnknown(
+          data['quiet_hours_end']!,
+          _quietHoursEndMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AppSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      themeMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}theme_mode'],
+      )!,
+      accentColorHex: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accent_color_hex'],
+      )!,
+      dateFormat: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date_format'],
+      )!,
+      defaultCategory: $AppSettingsTable.$converterdefaultCategory.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}default_category'],
+        )!,
+      ),
+      defaultReminderLeadMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}default_reminder_lead_minutes'],
+      )!,
+      quietHoursEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}quiet_hours_enabled'],
+      )!,
+      quietHoursStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quiet_hours_start'],
+      )!,
+      quietHoursEnd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quiet_hours_end'],
+      )!,
+    );
+  }
+
+  @override
+  $AppSettingsTable createAlias(String alias) {
+    return $AppSettingsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<TaskCategory, String, String>
+  $converterdefaultCategory = const EnumNameConverter<TaskCategory>(
+    TaskCategory.values,
+  );
+}
+
+class AppSetting extends DataClass implements Insertable<AppSetting> {
+  final int id;
+  final String themeMode;
+  final String accentColorHex;
+  final String dateFormat;
+  final TaskCategory defaultCategory;
+  final int defaultReminderLeadMinutes;
+  final bool quietHoursEnabled;
+  final String quietHoursStart;
+  final String quietHoursEnd;
+  const AppSetting({
+    required this.id,
+    required this.themeMode,
+    required this.accentColorHex,
+    required this.dateFormat,
+    required this.defaultCategory,
+    required this.defaultReminderLeadMinutes,
+    required this.quietHoursEnabled,
+    required this.quietHoursStart,
+    required this.quietHoursEnd,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['theme_mode'] = Variable<String>(themeMode);
+    map['accent_color_hex'] = Variable<String>(accentColorHex);
+    map['date_format'] = Variable<String>(dateFormat);
+    {
+      map['default_category'] = Variable<String>(
+        $AppSettingsTable.$converterdefaultCategory.toSql(defaultCategory),
+      );
+    }
+    map['default_reminder_lead_minutes'] = Variable<int>(
+      defaultReminderLeadMinutes,
+    );
+    map['quiet_hours_enabled'] = Variable<bool>(quietHoursEnabled);
+    map['quiet_hours_start'] = Variable<String>(quietHoursStart);
+    map['quiet_hours_end'] = Variable<String>(quietHoursEnd);
+    return map;
+  }
+
+  AppSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AppSettingsCompanion(
+      id: Value(id),
+      themeMode: Value(themeMode),
+      accentColorHex: Value(accentColorHex),
+      dateFormat: Value(dateFormat),
+      defaultCategory: Value(defaultCategory),
+      defaultReminderLeadMinutes: Value(defaultReminderLeadMinutes),
+      quietHoursEnabled: Value(quietHoursEnabled),
+      quietHoursStart: Value(quietHoursStart),
+      quietHoursEnd: Value(quietHoursEnd),
+    );
+  }
+
+  factory AppSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppSetting(
+      id: serializer.fromJson<int>(json['id']),
+      themeMode: serializer.fromJson<String>(json['themeMode']),
+      accentColorHex: serializer.fromJson<String>(json['accentColorHex']),
+      dateFormat: serializer.fromJson<String>(json['dateFormat']),
+      defaultCategory: $AppSettingsTable.$converterdefaultCategory.fromJson(
+        serializer.fromJson<String>(json['defaultCategory']),
+      ),
+      defaultReminderLeadMinutes: serializer.fromJson<int>(
+        json['defaultReminderLeadMinutes'],
+      ),
+      quietHoursEnabled: serializer.fromJson<bool>(json['quietHoursEnabled']),
+      quietHoursStart: serializer.fromJson<String>(json['quietHoursStart']),
+      quietHoursEnd: serializer.fromJson<String>(json['quietHoursEnd']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'themeMode': serializer.toJson<String>(themeMode),
+      'accentColorHex': serializer.toJson<String>(accentColorHex),
+      'dateFormat': serializer.toJson<String>(dateFormat),
+      'defaultCategory': serializer.toJson<String>(
+        $AppSettingsTable.$converterdefaultCategory.toJson(defaultCategory),
+      ),
+      'defaultReminderLeadMinutes': serializer.toJson<int>(
+        defaultReminderLeadMinutes,
+      ),
+      'quietHoursEnabled': serializer.toJson<bool>(quietHoursEnabled),
+      'quietHoursStart': serializer.toJson<String>(quietHoursStart),
+      'quietHoursEnd': serializer.toJson<String>(quietHoursEnd),
+    };
+  }
+
+  AppSetting copyWith({
+    int? id,
+    String? themeMode,
+    String? accentColorHex,
+    String? dateFormat,
+    TaskCategory? defaultCategory,
+    int? defaultReminderLeadMinutes,
+    bool? quietHoursEnabled,
+    String? quietHoursStart,
+    String? quietHoursEnd,
+  }) => AppSetting(
+    id: id ?? this.id,
+    themeMode: themeMode ?? this.themeMode,
+    accentColorHex: accentColorHex ?? this.accentColorHex,
+    dateFormat: dateFormat ?? this.dateFormat,
+    defaultCategory: defaultCategory ?? this.defaultCategory,
+    defaultReminderLeadMinutes:
+        defaultReminderLeadMinutes ?? this.defaultReminderLeadMinutes,
+    quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
+    quietHoursStart: quietHoursStart ?? this.quietHoursStart,
+    quietHoursEnd: quietHoursEnd ?? this.quietHoursEnd,
+  );
+  AppSetting copyWithCompanion(AppSettingsCompanion data) {
+    return AppSetting(
+      id: data.id.present ? data.id.value : this.id,
+      themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
+      accentColorHex: data.accentColorHex.present
+          ? data.accentColorHex.value
+          : this.accentColorHex,
+      dateFormat: data.dateFormat.present
+          ? data.dateFormat.value
+          : this.dateFormat,
+      defaultCategory: data.defaultCategory.present
+          ? data.defaultCategory.value
+          : this.defaultCategory,
+      defaultReminderLeadMinutes: data.defaultReminderLeadMinutes.present
+          ? data.defaultReminderLeadMinutes.value
+          : this.defaultReminderLeadMinutes,
+      quietHoursEnabled: data.quietHoursEnabled.present
+          ? data.quietHoursEnabled.value
+          : this.quietHoursEnabled,
+      quietHoursStart: data.quietHoursStart.present
+          ? data.quietHoursStart.value
+          : this.quietHoursStart,
+      quietHoursEnd: data.quietHoursEnd.present
+          ? data.quietHoursEnd.value
+          : this.quietHoursEnd,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppSetting(')
+          ..write('id: $id, ')
+          ..write('themeMode: $themeMode, ')
+          ..write('accentColorHex: $accentColorHex, ')
+          ..write('dateFormat: $dateFormat, ')
+          ..write('defaultCategory: $defaultCategory, ')
+          ..write('defaultReminderLeadMinutes: $defaultReminderLeadMinutes, ')
+          ..write('quietHoursEnabled: $quietHoursEnabled, ')
+          ..write('quietHoursStart: $quietHoursStart, ')
+          ..write('quietHoursEnd: $quietHoursEnd')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    themeMode,
+    accentColorHex,
+    dateFormat,
+    defaultCategory,
+    defaultReminderLeadMinutes,
+    quietHoursEnabled,
+    quietHoursStart,
+    quietHoursEnd,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppSetting &&
+          other.id == this.id &&
+          other.themeMode == this.themeMode &&
+          other.accentColorHex == this.accentColorHex &&
+          other.dateFormat == this.dateFormat &&
+          other.defaultCategory == this.defaultCategory &&
+          other.defaultReminderLeadMinutes == this.defaultReminderLeadMinutes &&
+          other.quietHoursEnabled == this.quietHoursEnabled &&
+          other.quietHoursStart == this.quietHoursStart &&
+          other.quietHoursEnd == this.quietHoursEnd);
+}
+
+class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
+  final Value<int> id;
+  final Value<String> themeMode;
+  final Value<String> accentColorHex;
+  final Value<String> dateFormat;
+  final Value<TaskCategory> defaultCategory;
+  final Value<int> defaultReminderLeadMinutes;
+  final Value<bool> quietHoursEnabled;
+  final Value<String> quietHoursStart;
+  final Value<String> quietHoursEnd;
+  const AppSettingsCompanion({
+    this.id = const Value.absent(),
+    this.themeMode = const Value.absent(),
+    this.accentColorHex = const Value.absent(),
+    this.dateFormat = const Value.absent(),
+    this.defaultCategory = const Value.absent(),
+    this.defaultReminderLeadMinutes = const Value.absent(),
+    this.quietHoursEnabled = const Value.absent(),
+    this.quietHoursStart = const Value.absent(),
+    this.quietHoursEnd = const Value.absent(),
+  });
+  AppSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.themeMode = const Value.absent(),
+    this.accentColorHex = const Value.absent(),
+    this.dateFormat = const Value.absent(),
+    this.defaultCategory = const Value.absent(),
+    this.defaultReminderLeadMinutes = const Value.absent(),
+    this.quietHoursEnabled = const Value.absent(),
+    this.quietHoursStart = const Value.absent(),
+    this.quietHoursEnd = const Value.absent(),
+  });
+  static Insertable<AppSetting> custom({
+    Expression<int>? id,
+    Expression<String>? themeMode,
+    Expression<String>? accentColorHex,
+    Expression<String>? dateFormat,
+    Expression<String>? defaultCategory,
+    Expression<int>? defaultReminderLeadMinutes,
+    Expression<bool>? quietHoursEnabled,
+    Expression<String>? quietHoursStart,
+    Expression<String>? quietHoursEnd,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (themeMode != null) 'theme_mode': themeMode,
+      if (accentColorHex != null) 'accent_color_hex': accentColorHex,
+      if (dateFormat != null) 'date_format': dateFormat,
+      if (defaultCategory != null) 'default_category': defaultCategory,
+      if (defaultReminderLeadMinutes != null)
+        'default_reminder_lead_minutes': defaultReminderLeadMinutes,
+      if (quietHoursEnabled != null) 'quiet_hours_enabled': quietHoursEnabled,
+      if (quietHoursStart != null) 'quiet_hours_start': quietHoursStart,
+      if (quietHoursEnd != null) 'quiet_hours_end': quietHoursEnd,
+    });
+  }
+
+  AppSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? themeMode,
+    Value<String>? accentColorHex,
+    Value<String>? dateFormat,
+    Value<TaskCategory>? defaultCategory,
+    Value<int>? defaultReminderLeadMinutes,
+    Value<bool>? quietHoursEnabled,
+    Value<String>? quietHoursStart,
+    Value<String>? quietHoursEnd,
+  }) {
+    return AppSettingsCompanion(
+      id: id ?? this.id,
+      themeMode: themeMode ?? this.themeMode,
+      accentColorHex: accentColorHex ?? this.accentColorHex,
+      dateFormat: dateFormat ?? this.dateFormat,
+      defaultCategory: defaultCategory ?? this.defaultCategory,
+      defaultReminderLeadMinutes:
+          defaultReminderLeadMinutes ?? this.defaultReminderLeadMinutes,
+      quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
+      quietHoursStart: quietHoursStart ?? this.quietHoursStart,
+      quietHoursEnd: quietHoursEnd ?? this.quietHoursEnd,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (themeMode.present) {
+      map['theme_mode'] = Variable<String>(themeMode.value);
+    }
+    if (accentColorHex.present) {
+      map['accent_color_hex'] = Variable<String>(accentColorHex.value);
+    }
+    if (dateFormat.present) {
+      map['date_format'] = Variable<String>(dateFormat.value);
+    }
+    if (defaultCategory.present) {
+      map['default_category'] = Variable<String>(
+        $AppSettingsTable.$converterdefaultCategory.toSql(
+          defaultCategory.value,
+        ),
+      );
+    }
+    if (defaultReminderLeadMinutes.present) {
+      map['default_reminder_lead_minutes'] = Variable<int>(
+        defaultReminderLeadMinutes.value,
+      );
+    }
+    if (quietHoursEnabled.present) {
+      map['quiet_hours_enabled'] = Variable<bool>(quietHoursEnabled.value);
+    }
+    if (quietHoursStart.present) {
+      map['quiet_hours_start'] = Variable<String>(quietHoursStart.value);
+    }
+    if (quietHoursEnd.present) {
+      map['quiet_hours_end'] = Variable<String>(quietHoursEnd.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('themeMode: $themeMode, ')
+          ..write('accentColorHex: $accentColorHex, ')
+          ..write('dateFormat: $dateFormat, ')
+          ..write('defaultCategory: $defaultCategory, ')
+          ..write('defaultReminderLeadMinutes: $defaultReminderLeadMinutes, ')
+          ..write('quietHoursEnabled: $quietHoursEnabled, ')
+          ..write('quietHoursStart: $quietHoursStart, ')
+          ..write('quietHoursEnd: $quietHoursEnd')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TasksTable tasks = $TasksTable(this);
   late final $UserProfilesTable userProfiles = $UserProfilesTable(this);
   late final $JournalEntriesTable journalEntries = $JournalEntriesTable(this);
+  late final $AppSettingsTable appSettings = $AppSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1802,6 +2392,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     tasks,
     userProfiles,
     journalEntries,
+    appSettings,
   ];
 }
 
@@ -2663,6 +3254,292 @@ typedef $$JournalEntriesTableProcessedTableManager =
       JournalEntry,
       PrefetchHooks Function()
     >;
+typedef $$AppSettingsTableCreateCompanionBuilder =
+    AppSettingsCompanion Function({
+      Value<int> id,
+      Value<String> themeMode,
+      Value<String> accentColorHex,
+      Value<String> dateFormat,
+      Value<TaskCategory> defaultCategory,
+      Value<int> defaultReminderLeadMinutes,
+      Value<bool> quietHoursEnabled,
+      Value<String> quietHoursStart,
+      Value<String> quietHoursEnd,
+    });
+typedef $$AppSettingsTableUpdateCompanionBuilder =
+    AppSettingsCompanion Function({
+      Value<int> id,
+      Value<String> themeMode,
+      Value<String> accentColorHex,
+      Value<String> dateFormat,
+      Value<TaskCategory> defaultCategory,
+      Value<int> defaultReminderLeadMinutes,
+      Value<bool> quietHoursEnabled,
+      Value<String> quietHoursStart,
+      Value<String> quietHoursEnd,
+    });
+
+class $$AppSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get themeMode => $composableBuilder(
+    column: $table.themeMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accentColorHex => $composableBuilder(
+    column: $table.accentColorHex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dateFormat => $composableBuilder(
+    column: $table.dateFormat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<TaskCategory, TaskCategory, String>
+  get defaultCategory => $composableBuilder(
+    column: $table.defaultCategory,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get defaultReminderLeadMinutes => $composableBuilder(
+    column: $table.defaultReminderLeadMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get quietHoursEnabled => $composableBuilder(
+    column: $table.quietHoursEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get quietHoursStart => $composableBuilder(
+    column: $table.quietHoursStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get quietHoursEnd => $composableBuilder(
+    column: $table.quietHoursEnd,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get themeMode => $composableBuilder(
+    column: $table.themeMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accentColorHex => $composableBuilder(
+    column: $table.accentColorHex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dateFormat => $composableBuilder(
+    column: $table.dateFormat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultCategory => $composableBuilder(
+    column: $table.defaultCategory,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get defaultReminderLeadMinutes => $composableBuilder(
+    column: $table.defaultReminderLeadMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get quietHoursEnabled => $composableBuilder(
+    column: $table.quietHoursEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quietHoursStart => $composableBuilder(
+    column: $table.quietHoursStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quietHoursEnd => $composableBuilder(
+    column: $table.quietHoursEnd,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get themeMode =>
+      $composableBuilder(column: $table.themeMode, builder: (column) => column);
+
+  GeneratedColumn<String> get accentColorHex => $composableBuilder(
+    column: $table.accentColorHex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dateFormat => $composableBuilder(
+    column: $table.dateFormat,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<TaskCategory, String> get defaultCategory =>
+      $composableBuilder(
+        column: $table.defaultCategory,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get defaultReminderLeadMinutes => $composableBuilder(
+    column: $table.defaultReminderLeadMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get quietHoursEnabled => $composableBuilder(
+    column: $table.quietHoursEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get quietHoursStart => $composableBuilder(
+    column: $table.quietHoursStart,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get quietHoursEnd => $composableBuilder(
+    column: $table.quietHoursEnd,
+    builder: (column) => column,
+  );
+}
+
+class $$AppSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppSettingsTable,
+          AppSetting,
+          $$AppSettingsTableFilterComposer,
+          $$AppSettingsTableOrderingComposer,
+          $$AppSettingsTableAnnotationComposer,
+          $$AppSettingsTableCreateCompanionBuilder,
+          $$AppSettingsTableUpdateCompanionBuilder,
+          (
+            AppSetting,
+            BaseReferences<_$AppDatabase, $AppSettingsTable, AppSetting>,
+          ),
+          AppSetting,
+          PrefetchHooks Function()
+        > {
+  $$AppSettingsTableTableManager(_$AppDatabase db, $AppSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> themeMode = const Value.absent(),
+                Value<String> accentColorHex = const Value.absent(),
+                Value<String> dateFormat = const Value.absent(),
+                Value<TaskCategory> defaultCategory = const Value.absent(),
+                Value<int> defaultReminderLeadMinutes = const Value.absent(),
+                Value<bool> quietHoursEnabled = const Value.absent(),
+                Value<String> quietHoursStart = const Value.absent(),
+                Value<String> quietHoursEnd = const Value.absent(),
+              }) => AppSettingsCompanion(
+                id: id,
+                themeMode: themeMode,
+                accentColorHex: accentColorHex,
+                dateFormat: dateFormat,
+                defaultCategory: defaultCategory,
+                defaultReminderLeadMinutes: defaultReminderLeadMinutes,
+                quietHoursEnabled: quietHoursEnabled,
+                quietHoursStart: quietHoursStart,
+                quietHoursEnd: quietHoursEnd,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> themeMode = const Value.absent(),
+                Value<String> accentColorHex = const Value.absent(),
+                Value<String> dateFormat = const Value.absent(),
+                Value<TaskCategory> defaultCategory = const Value.absent(),
+                Value<int> defaultReminderLeadMinutes = const Value.absent(),
+                Value<bool> quietHoursEnabled = const Value.absent(),
+                Value<String> quietHoursStart = const Value.absent(),
+                Value<String> quietHoursEnd = const Value.absent(),
+              }) => AppSettingsCompanion.insert(
+                id: id,
+                themeMode: themeMode,
+                accentColorHex: accentColorHex,
+                dateFormat: dateFormat,
+                defaultCategory: defaultCategory,
+                defaultReminderLeadMinutes: defaultReminderLeadMinutes,
+                quietHoursEnabled: quietHoursEnabled,
+                quietHoursStart: quietHoursStart,
+                quietHoursEnd: quietHoursEnd,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppSettingsTable,
+      AppSetting,
+      $$AppSettingsTableFilterComposer,
+      $$AppSettingsTableOrderingComposer,
+      $$AppSettingsTableAnnotationComposer,
+      $$AppSettingsTableCreateCompanionBuilder,
+      $$AppSettingsTableUpdateCompanionBuilder,
+      (
+        AppSetting,
+        BaseReferences<_$AppDatabase, $AppSettingsTable, AppSetting>,
+      ),
+      AppSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2673,4 +3550,6 @@ class $AppDatabaseManager {
       $$UserProfilesTableTableManager(_db, _db.userProfiles);
   $$JournalEntriesTableTableManager get journalEntries =>
       $$JournalEntriesTableTableManager(_db, _db.journalEntries);
+  $$AppSettingsTableTableManager get appSettings =>
+      $$AppSettingsTableTableManager(_db, _db.appSettings);
 }
