@@ -70,7 +70,23 @@ class DailySchedulePage extends StatelessWidget {
                                   child: TaskCard(
                                     task: task,
                                     onStatusChanged: (val) {
-                                      final newStatus = (val == true) ? TaskStatus.completed : TaskStatus.pending;
+                                      TaskStatus newStatus;
+                                      if (val == true) {
+                                        newStatus = TaskStatus.completed;
+                                      } else {
+                                        final now = DateTime.now();
+                                        final startOfToday = DateTime(now.year, now.month, now.day);
+                                        bool isOverdue = false;
+
+                                        if (task.endTime != null && task.endTime!.isBefore(now)) {
+                                          isOverdue = true;
+                                        } else if (task.endTime == null && task.deadline != null && task.deadline!.isBefore(startOfToday)) {
+                                          // EDGE CASE FIX: Compares to startOfToday instead of now
+                                          isOverdue = true;
+                                        }
+
+                                        newStatus = isOverdue ? TaskStatus.overdue : TaskStatus.pending;
+                                      }
                                       context.read<TaskBloc>().add(UpdateTaskEvent(task.copyWith(status: newStatus)));
                                     },
                                     onTap: () => TaskInputBottomSheet.show(context, existingTask: task),

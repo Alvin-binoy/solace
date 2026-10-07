@@ -45,7 +45,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
   late TaskPriority _priority;
   late TaskCategory _category;
 
-  // NEW: Track the reminder preference
   int? _reminderLeadMinutes;
 
   bool _hasModifiedPriority = false;
@@ -63,7 +62,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     _priority = t?.priority ?? TaskPriority.medium;
     _category = t?.category ?? TaskCategory.personal;
 
-    // NEW: Load existing reminder if editing
     _reminderLeadMinutes = t?.reminderLeadMinutes;
 
     if (t != null) {
@@ -84,6 +82,25 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     _titleController.dispose();
     _descController.dispose();
     super.dispose();
+  }
+
+  // NEW: Smart message helper that floats above the keyboard!
+  void _showSmartMessage(String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          // Dynamically pushes the snackbar above the keyboard height!
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          left: 16,
+          right: 16,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   void _pickDate() async {
@@ -123,9 +140,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
             _endTime = pickedEnd;
           });
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Start and End time must be set together. Time cleared.')),
-          );
+          _showSmartMessage('Start and End time must be set together. Time cleared.');
           setState(() {
             _startTime = null;
             _endTime = null;
@@ -193,56 +208,9 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     }
   }
 
-  // NEW: Dialog for picking the reminder lead time
-  void _pickReminder() async {
-    final Map<int?, String> options = {
-      null: "No alarm",
-      0: "At time of task",
-      5: "5 minutes before",
-      15: "15 minutes before",
-      30: "30 minutes before",
-      60: "1 hour before"
-    };
-
-    final picked = await showDialog<int?>(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('Set Reminder'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        children: options.entries.map((entry) => SimpleDialogOption(
-          onPressed: () => Navigator.pop(context, entry.key), // passing null is valid here to cancel alarm
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(entry.value, style: const TextStyle(fontSize: 16)),
-                if (_reminderLeadMinutes == entry.key) const Icon(Icons.check, color: Colors.purple),
-              ],
-            ),
-          ),
-        )).toList(),
-      ),
-    );
-
-    // showDialog returns null if user taps outside.
-    // We only update if they explicitly tapped an option (including the "No alarm" option which returns a deliberate null, handled differently in Dart if needed, but we check if it was explicitly popped with a value).
-    // To handle explicit null vs implicit dismiss, we wrap the return.
-    // Actually, `picked` will be null if tapped outside OR if "No alarm" was selected.
-    // To fix that, we'll just always update if they made a choice.
-    if (picked != _reminderLeadMinutes) {
-      setState(() {
-        _reminderLeadMinutes = picked;
-      });
-    }
-  }
-
   void _pickReminderSafe() async {
-    // NEW LOGIC: Block alarm if exact time isn't set!
     if (_scheduledDate == null || _startTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please set a Date and Start Time before setting an alarm.')),
-      );
+      _showSmartMessage('Please set a Date and Start Time before setting an alarm.');
       return;
     }
 
@@ -282,7 +250,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     );
   }
 
-  // NEW: Helper to display the reminder chip text
   String _getReminderText() {
     switch (_reminderLeadMinutes) {
       case 0: return 'At time of task';
@@ -301,9 +268,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       final startMins = (_startTime!.hour * 60) + _startTime!.minute;
       final endMins = (_endTime!.hour * 60) + _endTime!.minute;
       if (endMins <= startMins) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('End Time must be after Start Time')),
-        );
+        _showSmartMessage('End Time must be after Start Time');
         return;
       }
     }
@@ -322,11 +287,8 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       }
     }
 
-    // Fallback: if they set a reminder but didn't set a time, remind them
     if (_reminderLeadMinutes != null && finalStartTime == null && _scheduledDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please set a date or time for the alarm to trigger.')),
-      );
+      _showSmartMessage('Please set a date or time for the alarm to trigger.');
       return;
     }
 
@@ -339,7 +301,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       category: _category,
       status: isEditing ? widget.existingTask!.status : TaskStatus.pending,
       scheduledAt: _scheduledDate,
-      // FIXED: Actually save the scheduledDate as the general deadline!
       deadline: _scheduledDate,
       startTime: finalStartTime,
       endTime: finalEndTime,
@@ -392,7 +353,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
               maxLines: null,
             ),
 
-          // Chips Row
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -404,7 +364,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                     _scheduledDate = null;
                     _startTime = null;
                     _endTime = null;
-                    _reminderLeadMinutes = null; // Clear alarm if date is cleared
+                    _reminderLeadMinutes = null;
                   }),
                 ),
               if (_startTime != null && _endTime != null)
@@ -413,7 +373,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                   onDeleted: () => setState(() {
                     _startTime = null;
                     _endTime = null;
-                    _reminderLeadMinutes = null; // FIXED: This clears the alarm if the time block is deleted!
+                    _reminderLeadMinutes = null;
                   }),
                 ),
               if (_hasModifiedPriority || _priority != TaskPriority.medium)
@@ -436,7 +396,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                     _hasModifiedCategory = false;
                   }),
                 ),
-              // NEW: Show Reminder Chip if one is selected
               if (_reminderLeadMinutes != null)
                 InputChip(
                   avatar: const Icon(Icons.notifications_active, size: 16, color: Colors.purple),
@@ -451,7 +410,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
 
           const SizedBox(height: 8),
 
-          // Bottom Action Bar
           Row(
             children: [
               IconButton(
@@ -479,7 +437,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                 tooltip: 'Set Category',
                 onPressed: _pickCategory,
               ),
-              // NEW: The Alarm Icon Button
               IconButton(
                 icon: Icon(
                     _reminderLeadMinutes != null ? Icons.notifications_active : Icons.notifications_none,

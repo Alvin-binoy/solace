@@ -215,10 +215,24 @@ class _CalendarViewState extends State<_CalendarView> {
                           child: TaskCard(
                             task: event,
                             onStatusChanged: (val) {
-                              // Quick status toggle directly from calendar
-                              final newStatus = (val == true) ? TaskStatus.completed : TaskStatus.pending;
-                              // Note: to update tasks from calendar we need the TaskBloc.
-                              // We injected it globally in main, so GetIt.I<TaskBloc>() works safely here.
+                              TaskStatus newStatus;
+                              if (val == true) {
+                                newStatus = TaskStatus.completed;
+                              } else {
+                                final now = DateTime.now();
+                                final startOfToday = DateTime(now.year, now.month, now.day);
+                                bool isOverdue = false;
+
+                                // Note: The variable here is 'event', not 'task'
+                                if (event.endTime != null && event.endTime!.isBefore(now)) {
+                                  isOverdue = true;
+                                } else if (event.endTime == null && event.deadline != null && event.deadline!.isBefore(startOfToday)) {
+                                  isOverdue = true;
+                                }
+
+                                newStatus = isOverdue ? TaskStatus.overdue : TaskStatus.pending;
+                              }
+
                               GetIt.I<TaskBloc>().add(UpdateTaskEvent(event.copyWith(status: newStatus)));
                             },
                             onTap: () => TaskInputBottomSheet.show(context, existingTask: event),

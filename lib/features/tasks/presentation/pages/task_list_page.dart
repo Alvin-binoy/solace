@@ -200,11 +200,13 @@ class _TaskListViewState extends State<_TaskListView> {
                               newStatus = TaskStatus.completed;
                             } else {
                               final now = DateTime.now();
+                              final startOfToday = DateTime(now.year, now.month, now.day);
                               bool isOverdue = false;
 
                               if (task.endTime != null && task.endTime!.isBefore(now)) {
                                 isOverdue = true;
-                              } else if (task.endTime == null && task.deadline != null && task.deadline!.isBefore(now)) {
+                              } else if (task.endTime == null && task.deadline != null && task.deadline!.isBefore(startOfToday)) {
+                                // EDGE CASE FIX: Compares to startOfToday instead of now
                                 isOverdue = true;
                               }
 

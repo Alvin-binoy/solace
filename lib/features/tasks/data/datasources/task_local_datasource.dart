@@ -8,7 +8,6 @@ abstract class TaskLocalDatasource {
   Future<void> insertTask(TasksCompanion companion);
   Future<void> updateTask(TasksCompanion companion);
   Future<void> deleteTask(String id);
-  // NEW: Method to find and mark overdue tasks
   Future<void> markOverdueTasks();
 }
 
@@ -38,18 +37,19 @@ class TaskLocalDatasourceImpl implements TaskLocalDatasource {
     return (_db.delete(_db.tasks)..where((t) => t.id.equals(id))).go();
   }
 
-  // FIXED: Now checks exact endTime if it exists, falling back to deadline if not
   @override
   Future<void> markOverdueTasks() async {
     final now = DateTime.now();
+    // EDGE CASE SOLVED: Get exactly 00:00:00 of today's date
+    final startOfToday = DateTime(now.year, now.month, now.day);
 
     await (_db.update(_db.tasks)
       ..where((t) => t.status.equals(TaskStatus.pending.name))
       ..where((t) =>
-      // 1. If it has an exact end time, check if it has passed
+      // 1. If it has an exact end time, check if that exact time has passed
       (t.endTime.isNotNull() & t.endTime.isSmallerThanValue(now)) |
-      // 2. If it has no end time, check if the general deadline has passed
-      (t.endTime.isNull() & t.deadline.isNotNull() & t.deadline.isSmallerThanValue(now))
+      // 2. If it ONLY has a date, check if midnight of today has passed (meaning it is yesterday or older)
+      (t.endTime.isNull() & t.deadline.isNotNull() & t.deadline.isSmallerThanValue(startOfToday))
       ))
         .write(
       TasksCompanion(
