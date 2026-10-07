@@ -15,7 +15,6 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   late PageController _pageController;
-  // Dashboard is now the middle icon (index 2)
   int _selectedIndex = 2;
 
   @override
@@ -34,7 +33,6 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       _selectedIndex = index;
     });
-    // Smoothly slides to the page when a nav icon is tapped
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -44,34 +42,58 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        // Updates the bottom nav bar automatically when you swipe
-        onPageChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        children: const [
-          // The order you requested! Wrapped to prevent state loss on swipe.
-          _KeepAlivePage(child: SchedulePage()),
-          _KeepAlivePage(child: TaskListPage()),
-          _KeepAlivePage(child: DashboardPage()),
-          _KeepAlivePage(child: JournalPage()),
-          _KeepAlivePage(child: CalendarPage()),
-        ],
-      ),
-      bottomNavigationBar: _FloatingNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onItemTapped,
+    // NEW: Allow system exit ONLY if we are on the Dashboard (index 2)
+    final bool canPop = _selectedIndex == 2;
+
+    return PopScope(
+      canPop: canPop,
+      onPopInvoked: (didPop) {
+        // If didPop is true, it means we were on Dashboard and the app is exiting.
+        if (didPop) return;
+
+        // The Inward-Collapsing Flow Logic
+        int targetIndex = 2; // Default to Dashboard
+        if (_selectedIndex == 0) {
+          targetIndex = 1; // Schedule -> My Tasks
+        } else if (_selectedIndex == 1) {
+          targetIndex = 2; // My Tasks -> Dashboard
+        } else if (_selectedIndex == 4) {
+          targetIndex = 3; // Calendar -> Journal
+        } else if (_selectedIndex == 3) {
+          targetIndex = 2; // Journal -> Dashboard
+        }
+
+        // Animate inward
+        _onItemTapped(targetIndex);
+      },
+      child: Scaffold(
+        extendBody: true,
+        body: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          onPageChanged: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          children: const [
+            _KeepAlivePage(child: SchedulePage()),
+            _KeepAlivePage(child: TaskListPage()),
+            _KeepAlivePage(child: DashboardPage()),
+            _KeepAlivePage(child: JournalPage()),
+            _KeepAlivePage(child: CalendarPage()),
+          ],
+        ),
+        bottomNavigationBar: _FloatingNavBar(
+          selectedIndex: _selectedIndex,
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }
 }
 
+// ... The rest of your file (_KeepAlivePage, _FloatingNavBar, etc.) stays exactly the same!
 // EDGE CASE FIX: Prevents your lists from refreshing and losing scroll position when swiped
 class _KeepAlivePage extends StatefulWidget {
   final Widget child;
