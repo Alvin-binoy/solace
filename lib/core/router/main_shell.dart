@@ -6,6 +6,9 @@ import '../../features/schedule/presentation/pages/schedule_page.dart';
 import '../../features/journal/presentation/pages/journal_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 
+// NEW: Global Notifier to trigger tab switches from anywhere
+final ValueNotifier<int> globalTabNotifier = ValueNotifier(2);
+
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -15,55 +18,63 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   late PageController _pageController;
-  int _selectedIndex = 2;
+  int _selectedIndex = globalTabNotifier.value;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
+    // NEW: Listen for external commands to switch tabs
+    globalTabNotifier.addListener(_onGlobalTabChanged);
   }
 
   @override
   void dispose() {
+    globalTabNotifier.removeListener(_onGlobalTabChanged);
     _pageController.dispose();
     super.dispose();
   }
 
+  // Safe handler that avoids infinite animation loops
+  void _onGlobalTabChanged() {
+    final newIndex = globalTabNotifier.value;
+    if (_selectedIndex != newIndex) {
+      setState(() {
+        _selectedIndex = newIndex;
+      });
+      _pageController.animateToPage(
+        newIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutQuint,
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOutQuint,
-    );
+    // Updating the global notifier triggers the listener to do the animation
+    globalTabNotifier.value = index;
   }
 
   @override
   Widget build(BuildContext context) {
-    // NEW: Allow system exit ONLY if we are on the Dashboard (index 2)
     final bool canPop = _selectedIndex == 2;
 
     return PopScope(
       canPop: canPop,
       onPopInvoked: (didPop) {
-        // If didPop is true, it means we were on Dashboard and the app is exiting.
         if (didPop) return;
 
-        // The Inward-Collapsing Flow Logic
-        int targetIndex = 2; // Default to Dashboard
+        int targetIndex = 2;
         if (_selectedIndex == 0) {
-          targetIndex = 1; // Schedule -> My Tasks
+          targetIndex = 1;
         } else if (_selectedIndex == 1) {
-          targetIndex = 2; // My Tasks -> Dashboard
+          targetIndex = 2;
         } else if (_selectedIndex == 4) {
-          targetIndex = 3; // Calendar -> Journal
+          targetIndex = 3;
         } else if (_selectedIndex == 3) {
-          targetIndex = 2; // Journal -> Dashboard
+          targetIndex = 2;
         }
 
-        // Animate inward
         _onItemTapped(targetIndex);
       },
       child: Scaffold(
@@ -93,7 +104,7 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-// ... The rest of your file (_KeepAlivePage, _FloatingNavBar, etc.) stays exactly the same!
+// ... The rest of the file stays exactly the same (_KeepAlivePage, _FloatingNavBar, etc.)
 // EDGE CASE FIX: Prevents your lists from refreshing and losing scroll position when swiped
 class _KeepAlivePage extends StatefulWidget {
   final Widget child;

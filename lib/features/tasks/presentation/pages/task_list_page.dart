@@ -13,6 +13,9 @@ import '../widgets/task_card.dart';
 
 enum TaskFilterCategory { all, pending, completed, overdue }
 
+// NEW: Global Notifier so other pages (like Dashboard) can change the filter
+final ValueNotifier<TaskFilterCategory> globalTaskFilterNotifier = ValueNotifier(TaskFilterCategory.all);
+
 class TaskListPage extends StatelessWidget {
   const TaskListPage({super.key});
 
@@ -33,16 +36,33 @@ class _TaskListView extends StatefulWidget {
 }
 
 class _TaskListViewState extends State<_TaskListView> {
-  TaskFilterCategory _activeFilter = TaskFilterCategory.all;
+
+  @override
+  void initState() {
+    super.initState();
+    // NEW: Listen for external filter changes (e.g., from Dashboard taps)
+    globalTaskFilterNotifier.addListener(_onFilterChangedExternally);
+  }
+
+  @override
+  void dispose() {
+    globalTaskFilterNotifier.removeListener(_onFilterChangedExternally);
+    super.dispose();
+  }
+
+  void _onFilterChangedExternally() {
+    if (mounted) {
+      setState(() {}); // Trigger a rebuild when the global notifier changes
+    }
+  }
 
   List<TaskEntity> _filterTasks(List<TaskEntity> tasks) {
-    switch (_activeFilter) {
+    switch (globalTaskFilterNotifier.value) {
       case TaskFilterCategory.pending:
         return tasks.where((t) => t.status == TaskStatus.pending).toList();
       case TaskFilterCategory.completed:
         return tasks.where((t) => t.status == TaskStatus.completed).toList();
       case TaskFilterCategory.overdue:
-      // FIXED: The database already marks them overdue, just filter by status!
         return tasks.where((t) => t.status == TaskStatus.overdue).toList();
       case TaskFilterCategory.all:
         return tasks;
@@ -64,7 +84,7 @@ class _TaskListViewState extends State<_TaskListView> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: TaskFilterCategory.values.map((filter) {
-                final isSelected = _activeFilter == filter;
+                final isSelected = globalTaskFilterNotifier.value == filter;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: FilterChip(
@@ -78,7 +98,8 @@ class _TaskListViewState extends State<_TaskListView> {
                     selected: isSelected,
                     selectedColor: Theme.of(context).colorScheme.primary,
                     onSelected: (_) {
-                      setState(() => _activeFilter = filter);
+                      // Update the shared notifier instead of a local variable
+                      globalTaskFilterNotifier.value = filter;
                     },
                   ),
                 );
@@ -115,7 +136,7 @@ class _TaskListViewState extends State<_TaskListView> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No ${_activeFilter.name} tasks found',
+                            'No ${globalTaskFilterNotifier.value.name} tasks found',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey.shade600,
@@ -133,7 +154,6 @@ class _TaskListViewState extends State<_TaskListView> {
 
                       return Dismissible(
                         key: Key(task.id),
-                        // PRO UX: Only allow swiping right-to-left for deletion
                         direction: DismissDirection.endToStart,
                         background: Container(
                           color: Colors.red.shade400,
@@ -141,7 +161,6 @@ class _TaskListViewState extends State<_TaskListView> {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
                         ),
-                        // PRO UX: Show a confirmation dialog before actually deleting
                         confirmDismiss: (direction) async {
                           return await showDialog(
                             context: context,
@@ -168,9 +187,7 @@ class _TaskListViewState extends State<_TaskListView> {
                           );
                         },
                         onDismissed: (direction) {
-                          // This only runs if they clicked "Delete" in the dialog
                           context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
-
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Task deleted')),
                           );
@@ -182,7 +199,6 @@ class _TaskListViewState extends State<_TaskListView> {
                             if (value == true) {
                               newStatus = TaskStatus.completed;
                             } else {
-                              // Smart check: If unchecked, evaluate if the time has already passed
                               final now = DateTime.now();
                               bool isOverdue = false;
 
@@ -209,12 +225,11 @@ class _TaskListViewState extends State<_TaskListView> {
           ),
         ],
       ),
-      // We wrap it in a Padding widget to lift it above the custom bottom nav bar
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 100.0),
         child: FloatingActionButton(
           onPressed: () => TaskInputBottomSheet.show(context),
-          backgroundColor: Theme.of(context).colorScheme.onSurface, // Invert colors for high contrast
+          backgroundColor: Theme.of(context).colorScheme.onSurface,
           foregroundColor: Theme.of(context).colorScheme.surface,
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

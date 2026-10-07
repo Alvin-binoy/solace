@@ -10,6 +10,8 @@ import '../bloc/task_bloc.dart';
 import '../bloc/task_event.dart';
 import '../bloc/task_state.dart';
 import '../widgets/task_card.dart';
+import '../../../../core/router/main_shell.dart'; // Gives access to globalTabNotifier
+import 'task_list_page.dart'; // Gives access to globalTaskFilterNotifier and TaskFilterCategory enum
 
 // NEW IMPORTS
 import '../widgets/daily_progress_ring.dart';
@@ -88,7 +90,6 @@ class DashboardPage extends StatelessWidget {
             final pendingCount = state.tasks.where((t) => t.status == TaskStatus.pending).length;
             final overdueCount = state.tasks.where((t) => t.status == TaskStatus.overdue).length;
 
-            // NEW: Upgraded to a ListView so the charts and tasks scroll seamlessly together
             return ListView(
               padding: const EdgeInsets.only(bottom: 120), // Padding to clear the floating nav bar
               children: [
@@ -97,11 +98,33 @@ class DashboardPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Row(
                     children: [
-                      _StatCard(title: 'Pending', count: pendingCount),
+                      // EDGE CASE FIX: Hooked up the onTap actions to our new Notifiers
+                      _StatCard(
+                        title: 'Pending',
+                        count: pendingCount,
+                        onTap: () {
+                          globalTaskFilterNotifier.value = TaskFilterCategory.pending;
+                          globalTabNotifier.value = 1; // Slide to Tasks Tab
+                        },
+                      ),
                       const SizedBox(width: 8),
-                      _StatCard(title: 'Overdue', count: overdueCount),
+                      _StatCard(
+                        title: 'Overdue',
+                        count: overdueCount,
+                        onTap: () {
+                          globalTaskFilterNotifier.value = TaskFilterCategory.overdue;
+                          globalTabNotifier.value = 1; // Slide to Tasks Tab
+                        },
+                      ),
                       const SizedBox(width: 8),
-                      _StatCard(title: 'Done', count: completedTasks.length),
+                      _StatCard(
+                        title: 'Done',
+                        count: completedTasks.length,
+                        onTap: () {
+                          globalTaskFilterNotifier.value = TaskFilterCategory.completed;
+                          globalTabNotifier.value = 1; // Slide to Tasks Tab
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -170,7 +193,6 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // TaskRow and Notification Sheet code remains completely untouched below
   Widget _buildTaskRow(BuildContext context, TaskEntity task) {
     return Dismissible(
       key: Key(task.id),
@@ -290,25 +312,31 @@ class DashboardPage extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String title;
   final int count;
-  const _StatCard({required this.title, required this.count});
+  final VoidCallback onTap; // NEW: Receives the tap command
+
+  const _StatCard({required this.title, required this.count, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: isDark ? null : Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(count.toString(), style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
-            const SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
-          ],
+      child: GestureDetector( // NEW: Wraps the container to make it clickable
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: isDark ? null : Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(count.toString(), style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
+              const SizedBox(height: 4),
+              Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
         ),
       ),
     );
