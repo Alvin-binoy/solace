@@ -46,6 +46,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
   late TaskCategory _category;
 
   int? _reminderLeadMinutes;
+  int? _estimatedDurationMinutes; // NEW: Added for Workload Planner
 
   bool _hasModifiedPriority = false;
   bool _hasModifiedCategory = false;
@@ -63,6 +64,8 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     _category = t?.category ?? TaskCategory.personal;
 
     _reminderLeadMinutes = t?.reminderLeadMinutes;
+    // Allow it to be null initially so "Not set" shows by default
+    _estimatedDurationMinutes = t?.estimatedDurationMinutes;
 
     if (t != null) {
       _hasModifiedPriority = true;
@@ -84,7 +87,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     super.dispose();
   }
 
-  // NEW: Smart message helper that floats above the keyboard!
   void _showSmartMessage(String message) {
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +95,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.only(
-          // Dynamically pushes the snackbar above the keyboard height!
           bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           left: 16,
           right: 16,
@@ -261,16 +262,31 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     }
   }
 
+  // Helper for duration chip text formatting
+  String _formatDuration(int minutes) {
+    if (minutes < 60) return '$minutes min';
+    final double hours = minutes / 60;
+    return hours == hours.toInt() ? '${hours.toInt()} hr' : '${hours.toStringAsFixed(1)} hr';
+  }
+
   void _saveTask() {
     if (_titleController.text.trim().isEmpty) return;
+
+    int? finalDuration = _estimatedDurationMinutes; // Default to the dropdown value
 
     if (_startTime != null && _endTime != null) {
       final startMins = (_startTime!.hour * 60) + _startTime!.minute;
       final endMins = (_endTime!.hour * 60) + _endTime!.minute;
+
       if (endMins <= startMins) {
         _showSmartMessage('End Time must be after Start Time');
         return;
       }
+      // Auto-calculate the duration if they picked exact times
+      finalDuration = endMins - startMins;
+    } else if (_scheduledDate != null && finalDuration == null) {
+      // NEW LOGIC: Title + Date but no duration set? Silently default to 30 mins
+      finalDuration = 30;
     }
 
     DateTime? finalStartTime;
@@ -304,6 +320,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       deadline: _scheduledDate,
       startTime: finalStartTime,
       endTime: finalEndTime,
+      estimatedDurationMinutes: finalDuration, // Uses the auto-calculated or dropdown value
       reminderLeadMinutes: _reminderLeadMinutes,
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
@@ -396,6 +413,14 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                     _hasModifiedCategory = false;
                   }),
                 ),
+              if (_estimatedDurationMinutes != null)
+                InputChip(
+                  avatar: const Icon(Icons.timer_outlined, size: 16, color: Colors.teal),
+                  label: Text(_formatDuration(_estimatedDurationMinutes!)),
+                  onDeleted: () => setState(() {
+                    _estimatedDurationMinutes = null;
+                  }),
+                ),
               if (_reminderLeadMinutes != null)
                 InputChip(
                   avatar: const Icon(Icons.notifications_active, size: 16, color: Colors.purple),
@@ -452,7 +477,34 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+
+          // ONLY show the Estimate Dropdown if they HAVEN'T picked exact times
+          if (_startTime == null && _endTime == null) ...[
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: DropdownButtonFormField<int?>(
+                value: _estimatedDurationMinutes,
+                decoration: const InputDecoration(
+                  labelText: 'Estimated Duration (For Daily Planner)',
+                  border: InputBorder.none,
+                  prefixIcon: Icon(Icons.timer_outlined, color: Colors.teal),
+                ),
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('Not set')),
+                  DropdownMenuItem(value: 15, child: Text('15 minutes')),
+                  DropdownMenuItem(value: 30, child: Text('30 minutes')),
+                  DropdownMenuItem(value: 45, child: Text('45 minutes')),
+                  DropdownMenuItem(value: 60, child: Text('1 hour')),
+                  DropdownMenuItem(value: 90, child: Text('1.5 hours')),
+                  DropdownMenuItem(value: 120, child: Text('2 hours')),
+                  DropdownMenuItem(value: 180, child: Text('3 hours')),
+                  DropdownMenuItem(value: 240, child: Text('4 hours')),
+                ],
+                onChanged: (val) => setState(() => _estimatedDurationMinutes = val),
+              ),
+            ),
+          ],
         ],
       ),
     );

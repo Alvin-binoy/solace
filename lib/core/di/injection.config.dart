@@ -53,6 +53,8 @@ import 'package:solace/features/journal/domain/use_cases/watch_all_entries_use_c
     as _i811;
 import 'package:solace/features/journal/presentation/bloc/journal_bloc.dart'
     as _i159;
+import 'package:solace/features/schedule/domain/services/workload_planner_service.dart'
+    as _i994;
 import 'package:solace/features/settings/data/repositories/settings_repository_impl.dart'
     as _i873;
 import 'package:solace/features/settings/data/services/export_service.dart'
@@ -101,6 +103,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i844.AppDatabase>(() => _i844.AppDatabase());
     gh.lazySingleton<_i132.EncryptionService>(() => _i132.EncryptionService());
+    gh.lazySingleton<_i994.WorkloadPlannerService>(
+      () => _i994.WorkloadPlannerService(),
+    );
     gh.lazySingleton<_i767.ExportService>(
       () => _i767.ExportService(
         gh<_i844.AppDatabase>(),

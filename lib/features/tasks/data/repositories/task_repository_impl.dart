@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart' hide Task;
 import 'package:injectable/injectable.dart';
 import 'package:drift/drift.dart';
 import '../../../../core/errors/failures.dart';
-import '../../../../core/database/app_database.dart'; // Gives us the Drift 'Task' model
+import '../../../../core/database/app_database.dart';
 import '../../domain/entities/task_entity.dart';
 import '../../domain/repositories/task_repository.dart';
 import '../datasources/task_local_datasource.dart';
@@ -13,7 +13,6 @@ class TaskRepositoryImpl implements TaskRepository {
 
   TaskRepositoryImpl(this._datasource);
 
-  // Mappers to translate between Drift models and Domain entities
   TaskEntity _toEntity(Task model) {
     return TaskEntity(
       id: model.id,
@@ -24,9 +23,9 @@ class TaskRepositoryImpl implements TaskRepository {
       status: model.status,
       deadline: model.deadline,
       scheduledAt: model.scheduledAt,
-      // NEW: Map the start and end times to the entity
       startTime: model.startTime,
       endTime: model.endTime,
+      estimatedDurationMinutes: model.estimatedDurationMinutes, // NEW
       isRecurring: model.isRecurring,
       recurrenceRule: model.recurrenceRule,
       parentTaskId: model.parentTaskId,
@@ -46,9 +45,9 @@ class TaskRepositoryImpl implements TaskRepository {
       status: Value(entity.status),
       deadline: Value(entity.deadline),
       scheduledAt: Value(entity.scheduledAt),
-      // NEW: Map the start and end times to the database companion
       startTime: Value(entity.startTime),
       endTime: Value(entity.endTime),
+      estimatedDurationMinutes: Value(entity.estimatedDurationMinutes), // NEW
       isRecurring: Value(entity.isRecurring),
       recurrenceRule: Value(entity.recurrenceRule),
       parentTaskId: Value(entity.parentTaskId),

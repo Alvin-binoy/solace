@@ -11,12 +11,15 @@ class Tasks extends Table {
   TextColumn get category => textEnum<TaskCategory>()();
   TextColumn get status => textEnum<TaskStatus>()();
 
-  // The general date the task is scheduled for (Flexible To-Do)
+  // The general date the task is scheduled for
   DateTimeColumn get scheduledAt => dateTime().nullable()();
 
-  // NEW: Optional time-blocking fields for professional calendar events
+  // Time-blocking fields
   DateTimeColumn get startTime => dateTime().nullable()();
   DateTimeColumn get endTime => dateTime().nullable()();
+
+  // NEW: Added for the Daily Workload Planner Algorithm
+  IntColumn get estimatedDurationMinutes => integer().nullable()();
 
   DateTimeColumn get deadline => dateTime().nullable()();
   BoolColumn get isRecurring => boolean().withDefault(const Constant(false))();

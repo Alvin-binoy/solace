@@ -101,6 +101,17 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _estimatedDurationMinutesMeta =
+      const VerificationMeta('estimatedDurationMinutes');
+  @override
+  late final GeneratedColumn<int> estimatedDurationMinutes =
+      GeneratedColumn<int>(
+        'estimated_duration_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _deadlineMeta = const VerificationMeta(
     'deadline',
   );
@@ -192,6 +203,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     scheduledAt,
     startTime,
     endTime,
+    estimatedDurationMinutes,
     deadline,
     isRecurring,
     recurrenceRule,
@@ -253,6 +265,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       context.handle(
         _endTimeMeta,
         endTime.isAcceptableOrUnknown(data['end_time']!, _endTimeMeta),
+      );
+    }
+    if (data.containsKey('estimated_duration_minutes')) {
+      context.handle(
+        _estimatedDurationMinutesMeta,
+        estimatedDurationMinutes.isAcceptableOrUnknown(
+          data['estimated_duration_minutes']!,
+          _estimatedDurationMinutesMeta,
+        ),
       );
     }
     if (data.containsKey('deadline')) {
@@ -362,6 +383,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}end_time'],
       ),
+      estimatedDurationMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}estimated_duration_minutes'],
+      ),
       deadline: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}deadline'],
@@ -416,6 +441,7 @@ class Task extends DataClass implements Insertable<Task> {
   final DateTime? scheduledAt;
   final DateTime? startTime;
   final DateTime? endTime;
+  final int? estimatedDurationMinutes;
   final DateTime? deadline;
   final bool isRecurring;
   final String? recurrenceRule;
@@ -433,6 +459,7 @@ class Task extends DataClass implements Insertable<Task> {
     this.scheduledAt,
     this.startTime,
     this.endTime,
+    this.estimatedDurationMinutes,
     this.deadline,
     required this.isRecurring,
     this.recurrenceRule,
@@ -473,6 +500,11 @@ class Task extends DataClass implements Insertable<Task> {
     if (!nullToAbsent || endTime != null) {
       map['end_time'] = Variable<DateTime>(endTime);
     }
+    if (!nullToAbsent || estimatedDurationMinutes != null) {
+      map['estimated_duration_minutes'] = Variable<int>(
+        estimatedDurationMinutes,
+      );
+    }
     if (!nullToAbsent || deadline != null) {
       map['deadline'] = Variable<DateTime>(deadline);
     }
@@ -512,6 +544,9 @@ class Task extends DataClass implements Insertable<Task> {
       endTime: endTime == null && nullToAbsent
           ? const Value.absent()
           : Value(endTime),
+      estimatedDurationMinutes: estimatedDurationMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(estimatedDurationMinutes),
       deadline: deadline == null && nullToAbsent
           ? const Value.absent()
           : Value(deadline),
@@ -553,6 +588,9 @@ class Task extends DataClass implements Insertable<Task> {
       scheduledAt: serializer.fromJson<DateTime?>(json['scheduledAt']),
       startTime: serializer.fromJson<DateTime?>(json['startTime']),
       endTime: serializer.fromJson<DateTime?>(json['endTime']),
+      estimatedDurationMinutes: serializer.fromJson<int?>(
+        json['estimatedDurationMinutes'],
+      ),
       deadline: serializer.fromJson<DateTime?>(json['deadline']),
       isRecurring: serializer.fromJson<bool>(json['isRecurring']),
       recurrenceRule: serializer.fromJson<String?>(json['recurrenceRule']),
@@ -583,6 +621,9 @@ class Task extends DataClass implements Insertable<Task> {
       'scheduledAt': serializer.toJson<DateTime?>(scheduledAt),
       'startTime': serializer.toJson<DateTime?>(startTime),
       'endTime': serializer.toJson<DateTime?>(endTime),
+      'estimatedDurationMinutes': serializer.toJson<int?>(
+        estimatedDurationMinutes,
+      ),
       'deadline': serializer.toJson<DateTime?>(deadline),
       'isRecurring': serializer.toJson<bool>(isRecurring),
       'recurrenceRule': serializer.toJson<String?>(recurrenceRule),
@@ -603,6 +644,7 @@ class Task extends DataClass implements Insertable<Task> {
     Value<DateTime?> scheduledAt = const Value.absent(),
     Value<DateTime?> startTime = const Value.absent(),
     Value<DateTime?> endTime = const Value.absent(),
+    Value<int?> estimatedDurationMinutes = const Value.absent(),
     Value<DateTime?> deadline = const Value.absent(),
     bool? isRecurring,
     Value<String?> recurrenceRule = const Value.absent(),
@@ -620,6 +662,9 @@ class Task extends DataClass implements Insertable<Task> {
     scheduledAt: scheduledAt.present ? scheduledAt.value : this.scheduledAt,
     startTime: startTime.present ? startTime.value : this.startTime,
     endTime: endTime.present ? endTime.value : this.endTime,
+    estimatedDurationMinutes: estimatedDurationMinutes.present
+        ? estimatedDurationMinutes.value
+        : this.estimatedDurationMinutes,
     deadline: deadline.present ? deadline.value : this.deadline,
     isRecurring: isRecurring ?? this.isRecurring,
     recurrenceRule: recurrenceRule.present
@@ -647,6 +692,9 @@ class Task extends DataClass implements Insertable<Task> {
           : this.scheduledAt,
       startTime: data.startTime.present ? data.startTime.value : this.startTime,
       endTime: data.endTime.present ? data.endTime.value : this.endTime,
+      estimatedDurationMinutes: data.estimatedDurationMinutes.present
+          ? data.estimatedDurationMinutes.value
+          : this.estimatedDurationMinutes,
       deadline: data.deadline.present ? data.deadline.value : this.deadline,
       isRecurring: data.isRecurring.present
           ? data.isRecurring.value
@@ -677,6 +725,7 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('scheduledAt: $scheduledAt, ')
           ..write('startTime: $startTime, ')
           ..write('endTime: $endTime, ')
+          ..write('estimatedDurationMinutes: $estimatedDurationMinutes, ')
           ..write('deadline: $deadline, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
@@ -699,6 +748,7 @@ class Task extends DataClass implements Insertable<Task> {
     scheduledAt,
     startTime,
     endTime,
+    estimatedDurationMinutes,
     deadline,
     isRecurring,
     recurrenceRule,
@@ -720,6 +770,7 @@ class Task extends DataClass implements Insertable<Task> {
           other.scheduledAt == this.scheduledAt &&
           other.startTime == this.startTime &&
           other.endTime == this.endTime &&
+          other.estimatedDurationMinutes == this.estimatedDurationMinutes &&
           other.deadline == this.deadline &&
           other.isRecurring == this.isRecurring &&
           other.recurrenceRule == this.recurrenceRule &&
@@ -739,6 +790,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<DateTime?> scheduledAt;
   final Value<DateTime?> startTime;
   final Value<DateTime?> endTime;
+  final Value<int?> estimatedDurationMinutes;
   final Value<DateTime?> deadline;
   final Value<bool> isRecurring;
   final Value<String?> recurrenceRule;
@@ -757,6 +809,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.scheduledAt = const Value.absent(),
     this.startTime = const Value.absent(),
     this.endTime = const Value.absent(),
+    this.estimatedDurationMinutes = const Value.absent(),
     this.deadline = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
@@ -776,6 +829,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.scheduledAt = const Value.absent(),
     this.startTime = const Value.absent(),
     this.endTime = const Value.absent(),
+    this.estimatedDurationMinutes = const Value.absent(),
     this.deadline = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
@@ -800,6 +854,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<DateTime>? scheduledAt,
     Expression<DateTime>? startTime,
     Expression<DateTime>? endTime,
+    Expression<int>? estimatedDurationMinutes,
     Expression<DateTime>? deadline,
     Expression<bool>? isRecurring,
     Expression<String>? recurrenceRule,
@@ -819,6 +874,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (scheduledAt != null) 'scheduled_at': scheduledAt,
       if (startTime != null) 'start_time': startTime,
       if (endTime != null) 'end_time': endTime,
+      if (estimatedDurationMinutes != null)
+        'estimated_duration_minutes': estimatedDurationMinutes,
       if (deadline != null) 'deadline': deadline,
       if (isRecurring != null) 'is_recurring': isRecurring,
       if (recurrenceRule != null) 'recurrence_rule': recurrenceRule,
@@ -841,6 +898,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<DateTime?>? scheduledAt,
     Value<DateTime?>? startTime,
     Value<DateTime?>? endTime,
+    Value<int?>? estimatedDurationMinutes,
     Value<DateTime?>? deadline,
     Value<bool>? isRecurring,
     Value<String?>? recurrenceRule,
@@ -860,6 +918,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       scheduledAt: scheduledAt ?? this.scheduledAt,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
+      estimatedDurationMinutes:
+          estimatedDurationMinutes ?? this.estimatedDurationMinutes,
       deadline: deadline ?? this.deadline,
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
@@ -907,6 +967,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (endTime.present) {
       map['end_time'] = Variable<DateTime>(endTime.value);
     }
+    if (estimatedDurationMinutes.present) {
+      map['estimated_duration_minutes'] = Variable<int>(
+        estimatedDurationMinutes.value,
+      );
+    }
     if (deadline.present) {
       map['deadline'] = Variable<DateTime>(deadline.value);
     }
@@ -946,6 +1011,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('scheduledAt: $scheduledAt, ')
           ..write('startTime: $startTime, ')
           ..write('endTime: $endTime, ')
+          ..write('estimatedDurationMinutes: $estimatedDurationMinutes, ')
           ..write('deadline: $deadline, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
@@ -2407,6 +2473,7 @@ typedef $$TasksTableCreateCompanionBuilder =
       Value<DateTime?> scheduledAt,
       Value<DateTime?> startTime,
       Value<DateTime?> endTime,
+      Value<int?> estimatedDurationMinutes,
       Value<DateTime?> deadline,
       Value<bool> isRecurring,
       Value<String?> recurrenceRule,
@@ -2427,6 +2494,7 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<DateTime?> scheduledAt,
       Value<DateTime?> startTime,
       Value<DateTime?> endTime,
+      Value<int?> estimatedDurationMinutes,
       Value<DateTime?> deadline,
       Value<bool> isRecurring,
       Value<String?> recurrenceRule,
@@ -2490,6 +2558,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<DateTime> get endTime => $composableBuilder(
     column: $table.endTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get estimatedDurationMinutes => $composableBuilder(
+    column: $table.estimatedDurationMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2583,6 +2656,11 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get estimatedDurationMinutes => $composableBuilder(
+    column: $table.estimatedDurationMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get deadline => $composableBuilder(
     column: $table.deadline,
     builder: (column) => ColumnOrderings(column),
@@ -2659,6 +2737,11 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<DateTime> get endTime =>
       $composableBuilder(column: $table.endTime, builder: (column) => column);
 
+  GeneratedColumn<int> get estimatedDurationMinutes => $composableBuilder(
+    column: $table.estimatedDurationMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get deadline =>
       $composableBuilder(column: $table.deadline, builder: (column) => column);
 
@@ -2726,6 +2809,7 @@ class $$TasksTableTableManager
                 Value<DateTime?> scheduledAt = const Value.absent(),
                 Value<DateTime?> startTime = const Value.absent(),
                 Value<DateTime?> endTime = const Value.absent(),
+                Value<int?> estimatedDurationMinutes = const Value.absent(),
                 Value<DateTime?> deadline = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
@@ -2744,6 +2828,7 @@ class $$TasksTableTableManager
                 scheduledAt: scheduledAt,
                 startTime: startTime,
                 endTime: endTime,
+                estimatedDurationMinutes: estimatedDurationMinutes,
                 deadline: deadline,
                 isRecurring: isRecurring,
                 recurrenceRule: recurrenceRule,
@@ -2764,6 +2849,7 @@ class $$TasksTableTableManager
                 Value<DateTime?> scheduledAt = const Value.absent(),
                 Value<DateTime?> startTime = const Value.absent(),
                 Value<DateTime?> endTime = const Value.absent(),
+                Value<int?> estimatedDurationMinutes = const Value.absent(),
                 Value<DateTime?> deadline = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
@@ -2782,6 +2868,7 @@ class $$TasksTableTableManager
                 scheduledAt: scheduledAt,
                 startTime: startTime,
                 endTime: endTime,
+                estimatedDurationMinutes: estimatedDurationMinutes,
                 deadline: deadline,
                 isRecurring: isRecurring,
                 recurrenceRule: recurrenceRule,

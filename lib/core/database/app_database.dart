@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2; // Bumped to 2 since we added a new table
+  int get schemaVersion => 3; // Bumped to 2 since we added a new table
 }
 
 LazyDatabase _openConnection() {

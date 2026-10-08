@@ -26,11 +26,11 @@ void callbackDispatcher() {
       }
 
       // Return true to tell the OS the task was successful
-      return Future.value(true);
+      return true;
     } catch (e) {
       // EDGE CASE: If the database is locked or initialization fails,
       // return false so the OS knows to retry it later.
-      return Future.value(false);
+      return false;
     }
   });
 }

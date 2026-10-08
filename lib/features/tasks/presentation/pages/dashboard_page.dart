@@ -10,12 +10,13 @@ import '../bloc/task_bloc.dart';
 import '../bloc/task_event.dart';
 import '../bloc/task_state.dart';
 import '../widgets/task_card.dart';
-import '../../../../core/router/main_shell.dart'; // Gives access to globalTabNotifier
-import 'task_list_page.dart'; // Gives access to globalTaskFilterNotifier and TaskFilterCategory enum
+import '../../../../core/router/main_shell.dart';
+import 'task_list_page.dart';
 
-// NEW IMPORTS
 import '../widgets/daily_progress_ring.dart';
 import '../widgets/weekly_bar_chart.dart';
+// FIXED: Corrected the relative import path (3 levels up, not 2)
+import '../../../schedule/presentation/widgets/daily_planner_bottom_sheet.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -83,20 +84,19 @@ class DashboardPage extends StatelessWidget {
             final overdueCount = state.tasks.where((t) => t.status == TaskStatus.overdue).length;
 
             return ListView(
-              padding: const EdgeInsets.only(bottom: 120), // Padding to clear the floating nav bar
+              padding: const EdgeInsets.only(bottom: 120),
               children: [
                 // 1. Stat Cards
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Row(
                     children: [
-                      // EDGE CASE FIX: Hooked up the onTap actions to our new Notifiers
                       _StatCard(
                         title: 'Pending',
                         count: pendingCount,
                         onTap: () {
                           globalTaskFilterNotifier.value = TaskFilterCategory.pending;
-                          globalTabNotifier.value = 1; // Slide to Tasks Tab
+                          globalTabNotifier.value = 1;
                         },
                       ),
                       const SizedBox(width: 8),
@@ -105,7 +105,7 @@ class DashboardPage extends StatelessWidget {
                         count: overdueCount,
                         onTap: () {
                           globalTaskFilterNotifier.value = TaskFilterCategory.overdue;
-                          globalTabNotifier.value = 1; // Slide to Tasks Tab
+                          globalTabNotifier.value = 1;
                         },
                       ),
                       const SizedBox(width: 8),
@@ -114,14 +114,14 @@ class DashboardPage extends StatelessWidget {
                         count: completedTasks.length,
                         onTap: () {
                           globalTaskFilterNotifier.value = TaskFilterCategory.completed;
-                          globalTabNotifier.value = 1; // Slide to Tasks Tab
+                          globalTabNotifier.value = 1;
                         },
                       ),
                     ],
                   ),
                 ),
 
-                // 2. The New Analytics Charts!
+                // 2. The Analytics Charts
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: DailyProgressRing(tasks: state.tasks),
@@ -132,6 +132,68 @@ class DashboardPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 16),
+
+                // NEW: Plan My Day Button
+                Padding(
+                  // FIXED: Changed from symmetric to only to allow bottom padding
+                  padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 24.0),
+                  child: InkWell(
+                    onTap: () {
+                      final now = DateTime.now();
+                      // Grab only today's tasks to feed to the planner
+                      final todaysTasks = state.tasks.where((t) {
+                        final dateToUse = t.startTime ?? t.scheduledAt ?? t.deadline;
+                        if (dateToUse == null) return false;
+                        return dateToUse.year == now.year &&
+                            dateToUse.month == now.month &&
+                            dateToUse.day == now.day;
+                      }).toList();
+
+                      DailyPlannerBottomSheet.show(context, todaysTasks);
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        // FIXED: Using a dedicated vibrant gradient so white text is always visible
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.indigo.shade600,
+                              Colors.purple.shade500,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.purple.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.auto_awesome, color: Colors.white, size: 36),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Plan My Day', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                SizedBox(height: 4),
+                                Text('Let the algorithm build your realistic schedule', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text('Your Tasks', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -145,7 +207,6 @@ class DashboardPage extends StatelessWidget {
                     child: Center(child: Text('No tasks yet. Tap + to add one!')),
                   )
                 else ...[
-                  // The Spread Operator (...) unpacks the tasks perfectly into the ListView
                   ...activeTasks.map((task) => _buildTaskRow(context, task)),
 
                   if (completedTasks.isNotEmpty)
@@ -235,7 +296,6 @@ class DashboardPage extends StatelessWidget {
             if (task.endTime != null && task.endTime!.isBefore(now)) {
               isOverdue = true;
             } else if (task.endTime == null && task.deadline != null && task.deadline!.isBefore(startOfToday)) {
-              // EDGE CASE FIX: Compares to startOfToday instead of now
               isOverdue = true;
             }
 
@@ -308,7 +368,7 @@ class DashboardPage extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String title;
   final int count;
-  final VoidCallback onTap; // NEW: Receives the tap command
+  final VoidCallback onTap;
 
   const _StatCard({required this.title, required this.count, required this.onTap});
 
@@ -316,7 +376,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
-      child: GestureDetector( // NEW: Wraps the container to make it clickable
+      child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
