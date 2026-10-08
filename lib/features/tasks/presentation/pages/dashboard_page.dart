@@ -140,13 +140,20 @@ class DashboardPage extends StatelessWidget {
                   child: InkWell(
                     onTap: () {
                       final now = DateTime.now();
-                      // Grab only today's tasks to feed to the planner
+                      final startOfToday = DateTime(now.year, now.month, now.day);
+
+                      // Grab today's tasks PLUS any unfinished tasks from the past
                       final todaysTasks = state.tasks.where((t) {
+                        // Ignore completed tasks
+                        if (t.status == TaskStatus.completed) return false;
+
                         final dateToUse = t.startTime ?? t.scheduledAt ?? t.deadline;
                         if (dateToUse == null) return false;
-                        return dateToUse.year == now.year &&
-                            dateToUse.month == now.month &&
-                            dateToUse.day == now.day;
+
+                        final taskDate = DateTime(dateToUse.year, dateToUse.month, dateToUse.day);
+
+                        // Include if it's exactly today OR any day before today
+                        return taskDate.isAtSameMomentAs(startOfToday) || taskDate.isBefore(startOfToday);
                       }).toList();
 
                       DailyPlannerBottomSheet.show(context, todaysTasks);

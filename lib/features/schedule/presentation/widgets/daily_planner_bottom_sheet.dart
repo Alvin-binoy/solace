@@ -39,7 +39,6 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
     int totalMins = 0;
     for (var task in widget.todaysTasks) {
       if (task.status == TaskStatus.completed) continue;
-      // We calculate the required workload as purely the sum of effort to warn them initially
       if (task.startTime != null && task.endTime != null) {
         totalMins += task.endTime!.difference(task.startTime!).inMinutes;
       } else {
@@ -63,12 +62,35 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
   }
 
   void _postponeTasks() {
+    // If there is a deadline risk, confirm before moving to tomorrow
+    if (_planResult!.hasDeadlineRisk) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Deadline Warning'),
+          content: const Text('Some postponed tasks are due TODAY. Are you sure you want to push them to tomorrow?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _executePostpone();
+              },
+              child: const Text('Move Anyway', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      _executePostpone();
+    }
+  }
+
+  void _executePostpone() {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     for (var task in _planResult!.postponedFlexible) {
-      // Auto-move tasks to tomorrow
       context.read<TaskBloc>().add(UpdateTaskEvent(task.copyWith(
         scheduledAt: tomorrow,
-        // If deadline is today, bump it to tomorrow so it doesn't instantly become overdue
         deadline: (task.deadline != null && task.deadline!.isBefore(tomorrow))
             ? tomorrow
             : task.deadline,
@@ -76,7 +98,7 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
     }
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Unfit tasks successfully postponed to tomorrow!'), backgroundColor: Colors.green),
+      const SnackBar(content: Text('Tasks postponed to tomorrow!'), backgroundColor: Colors.green),
     );
   }
 
@@ -86,6 +108,30 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
     if (hours > 0 && remainingMins > 0) return '${hours}h ${remainingMins}m';
     if (hours > 0) return '${hours}h';
     return '${remainingMins}m';
+  }
+
+  Widget _buildWarningBanner(String message, Color color, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -108,14 +154,14 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
               IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           if (!_hasPlanned) ...[
             Text(
               'What can you realistically complete today?',
               style: TextStyle(fontSize: 16, color: isDark ? Colors.grey.shade400 : Colors.grey.shade700),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -143,17 +189,6 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
                 ],
               ),
             ),
-            if (requiredMins > (_availableHours * 60))
-              Padding(
-                padding: const EdgeInsets.only(top: 12.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text('Workload Conflict! You have more tasks than time.', style: TextStyle(color: Colors.orange.shade700, fontSize: 13, fontWeight: FontWeight.w600))),
-                  ],
-                ),
-              ),
             const SizedBox(height: 32),
             const Text('Slide to set your free time:', style: TextStyle(fontWeight: FontWeight.w600)),
             Slider(
@@ -177,29 +212,20 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
           ] else ...[
             // RESULTS VIEW
 
-            // NEW: Collision Warning Banner
+            // Smart Edge Case Warnings
             if (_planResult!.hasTimeBlockConflicts)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.shade300),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.red),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Schedule Conflict: You have overlapping time blocks!',
-                        style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildWarningBanner('Schedule Conflict: You have overlapping time blocks!', Colors.red, Icons.error_outline),
+
+            if (_planResult!.isOverCapacity)
+              _buildWarningBanner('Over Capacity: Your scheduled meetings exceed your selected free time!', Colors.orange, Icons.warning_amber),
+
+            if (_planResult!.hasOversizedTasks)
+              _buildWarningBanner('Oversized Task: A task is larger than your total free time. Break it down!', Colors.blue, Icons.compress),
+
+            if (_planResult!.hasDeadlineRisk)
+              _buildWarningBanner('Deadline Risk: You are postponing tasks that are due today!', Colors.deepOrange, Icons.timer_off),
+
+            const SizedBox(height: 8),
 
             Container(
               padding: const EdgeInsets.all(16),
@@ -228,7 +254,7 @@ class _DailyPlannerBottomSheetState extends State<DailyPlannerBottomSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 children: [
