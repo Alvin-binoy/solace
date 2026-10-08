@@ -69,13 +69,6 @@ class SettingsPage extends StatelessWidget {
       if (result != null && result.files.single.path != null && context.mounted) {
         final path = result.files.single.path!;
 
-        if (!path.endsWith('.solace')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select a valid .solace backup file.'), backgroundColor: Colors.red),
-          );
-          return;
-        }
-
         final bytes = await File(path).readAsBytes();
 
         if (!context.mounted) return;
@@ -173,26 +166,24 @@ class SettingsPage extends StatelessWidget {
             );
 
           } else if (state is SettingsRestoreSuccess) {
-            // Wrap in try-catch so it doesn't crash the listener if notifications aren't initialized yet
+            // 1. Show the success message FIRST before doing anything else
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Backup restored! Data refreshed.'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 4),
+              ),
+            );
+
+            // 2. Instantly reload Tasks and Journals from the new database
+            context.read<TaskBloc>().add(WatchTasksEvent());
+            context.read<JournalBloc>().add(WatchEntriesEvent());
+
+            // 3. Silently clear old alarms safely in the background
             try {
-              final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-              flutterLocalNotificationsPlugin.cancelAll(); // Removed 'await' so it doesn't block the UI
-            } catch (e) {
-              // Ignore silently, it just means no alarms were set anyway
-            }
-
-            if (context.mounted) {
-              // GHOST DATA FIX: Instantly reload Tasks and Journals from the new database
-              context.read<TaskBloc>().add(WatchTasksEvent());
-              context.read<JournalBloc>().add(WatchEntriesEvent());
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Backup restored! Data refreshed.'),
-                  backgroundColor: Colors.green,
-                  duration: Duration(seconds: 4), // Make sure it stays on screen long enough to read
-                ),
-              );
+              FlutterLocalNotificationsPlugin().cancelAll();
+            } catch (_) {
+              // Ignore silently if notifications aren't fully initialized yet
             }
           }
         },
