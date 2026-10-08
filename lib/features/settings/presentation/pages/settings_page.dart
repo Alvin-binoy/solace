@@ -5,10 +5,17 @@ import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
+
+// Imports to instantly refresh UI after restore
+import '../../../tasks/presentation/bloc/task_bloc.dart';
+import '../../../tasks/presentation/bloc/task_event.dart';
+import '../../../journal/presentation/bloc/journal_bloc.dart';
+import '../../../journal/presentation/bloc/journal_event.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -54,7 +61,6 @@ class SettingsPage extends StatelessWidget {
 
   void _handleRestoreBackup(BuildContext context) async {
     try {
-      // Switched back to FileType.any to prevent Android from silently crashing the picker
       final result = await fp.FilePicker.platform.pickFiles(
         type: fp.FileType.any,
         allowMultiple: false,
@@ -63,7 +69,6 @@ class SettingsPage extends StatelessWidget {
       if (result != null && result.files.single.path != null && context.mounted) {
         final path = result.files.single.path!;
 
-        // Quick check to ensure they actually picked a .solace file
         if (!path.endsWith('.solace')) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Please select a valid .solace backup file.'), backgroundColor: Colors.red),
@@ -106,7 +111,6 @@ class SettingsPage extends StatelessWidget {
             final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
             final fileName = 'solace_backup_$dateStr.solace';
 
-            // Show a sleek menu to let you choose where it goes
             showModalBottomSheet(
               context: context,
               builder: (sheetContext) {
@@ -122,15 +126,14 @@ class SettingsPage extends StatelessWidget {
                         title: const Text('Save to Phone Storage'),
                         subtitle: const Text('Pick a specific folder on this device'),
                         onTap: () async {
-                          Navigator.pop(sheetContext); // Close the menu
+                          Navigator.pop(sheetContext);
                           try {
-                            // Opens the native Android folder picker & writes securely
                             String? outputFile = await fp.FilePicker.platform.saveFile(
                               dialogTitle: 'Save Backup',
                               fileName: fileName,
                               type: fp.FileType.custom,
                               allowedExtensions: ['solace'],
-                              bytes: state.bytes, // FIX: Let the plugin handle the file writing
+                              bytes: state.bytes,
                             );
 
                             if (outputFile != null && context.mounted) {
@@ -152,9 +155,8 @@ class SettingsPage extends StatelessWidget {
                         title: const Text('Share to Cloud / App'),
                         subtitle: const Text('Google Drive, Email, WhatsApp, etc.'),
                         onTap: () async {
-                          Navigator.pop(sheetContext); // Close the menu
+                          Navigator.pop(sheetContext);
 
-                          // Write to a temp file so Android can share it properly
                           final tempDir = await getTemporaryDirectory();
                           final tempFile = File('${tempDir.path}/$fileName');
                           await tempFile.writeAsBytes(state.bytes);
@@ -171,9 +173,27 @@ class SettingsPage extends StatelessWidget {
             );
 
           } else if (state is SettingsRestoreSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Backup restored successfully! Please restart the app.'), backgroundColor: Colors.green),
-            );
+            // Wrap in try-catch so it doesn't crash the listener if notifications aren't initialized yet
+            try {
+              final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+              flutterLocalNotificationsPlugin.cancelAll(); // Removed 'await' so it doesn't block the UI
+            } catch (e) {
+              // Ignore silently, it just means no alarms were set anyway
+            }
+
+            if (context.mounted) {
+              // GHOST DATA FIX: Instantly reload Tasks and Journals from the new database
+              context.read<TaskBloc>().add(WatchTasksEvent());
+              context.read<JournalBloc>().add(WatchEntriesEvent());
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Backup restored! Data refreshed.'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 4), // Make sure it stays on screen long enough to read
+                ),
+              );
+            }
           }
         },
         buildWhen: (previous, current) => current is SettingsLoaded || current is SettingsLoading || current is SettingsInitial,
