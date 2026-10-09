@@ -67,6 +67,16 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<Either<Failure, List<TaskEntity>>> getPendingTasks() async {
+    try {
+      final models = await _datasource.getPendingTasks();
+      return Right(models.map(_toEntity).toList());
+    } catch (e) {
+      return const Left(DatabaseFailure('Failed to fetch pending tasks'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> addTask(TaskEntity task) async {
     try {
       await _datasource.insertTask(_toCompanion(task));

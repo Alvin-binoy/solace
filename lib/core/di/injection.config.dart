@@ -79,6 +79,8 @@ import 'package:solace/features/tasks/data/repositories/task_repository_impl.dar
     as _i690;
 import 'package:solace/features/tasks/domain/repositories/task_repository.dart'
     as _i294;
+import 'package:solace/features/tasks/domain/services/priority_engine.dart'
+    as _i148;
 import 'package:solace/features/tasks/domain/use_cases/add_task_use_case.dart'
     as _i635;
 import 'package:solace/features/tasks/domain/use_cases/delete_task_use_case.dart'
@@ -155,8 +157,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i294.TaskRepository>(
       () => _i690.TaskRepositoryImpl(gh<_i493.TaskLocalDatasource>()),
     );
-    gh.lazySingleton<_i546.OverdueCheckerService>(
-      () => _i546.OverdueCheckerService(gh<_i294.TaskRepository>()),
+    gh.lazySingleton<_i148.PriorityEngine>(
+      () => _i148.PriorityEngine(gh<_i294.TaskRepository>()),
     );
     gh.factory<_i635.AddTaskUseCase>(
       () => _i635.AddTaskUseCase(gh<_i294.TaskRepository>()),
@@ -193,6 +195,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i435.WatchSettingsUseCase>(
       () => _i435.WatchSettingsUseCase(gh<_i611.SettingsRepository>()),
+    );
+    gh.lazySingleton<_i546.OverdueCheckerService>(
+      () => _i546.OverdueCheckerService(
+        gh<_i294.TaskRepository>(),
+        gh<_i148.PriorityEngine>(),
+      ),
     );
     gh.factory<_i778.SettingsBloc>(
       () => _i778.SettingsBloc(

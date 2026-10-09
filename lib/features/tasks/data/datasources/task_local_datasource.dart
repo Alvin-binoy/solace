@@ -5,6 +5,10 @@ import '../../../../core/enums/task_status.dart';
 
 abstract class TaskLocalDatasource {
   Stream<List<Task>> watchAllTasks();
+
+  // NEW: A one-time fetch for our background engines
+  Future<List<Task>> getPendingTasks();
+
   Future<void> insertTask(TasksCompanion companion);
   Future<void> updateTask(TasksCompanion companion);
   Future<void> deleteTask(String id);
@@ -20,6 +24,12 @@ class TaskLocalDatasourceImpl implements TaskLocalDatasource {
   @override
   Stream<List<Task>> watchAllTasks() {
     return _db.select(_db.tasks).watch();
+  }
+
+  // NEW: Grabs all tasks that aren't completed or overdue yet
+  @override
+  Future<List<Task>> getPendingTasks() {
+    return (_db.select(_db.tasks)..where((t) => t.status.equals(TaskStatus.pending.name))).get();
   }
 
   @override
@@ -40,15 +50,12 @@ class TaskLocalDatasourceImpl implements TaskLocalDatasource {
   @override
   Future<void> markOverdueTasks() async {
     final now = DateTime.now();
-    // EDGE CASE SOLVED: Get exactly 00:00:00 of today's date
     final startOfToday = DateTime(now.year, now.month, now.day);
 
     await (_db.update(_db.tasks)
       ..where((t) => t.status.equals(TaskStatus.pending.name))
       ..where((t) =>
-      // 1. If it has an exact end time, check if that exact time has passed
       (t.endTime.isNotNull() & t.endTime.isSmallerThanValue(now)) |
-      // 2. If it ONLY has a date, check if midnight of today has passed (meaning it is yesterday or older)
       (t.endTime.isNull() & t.deadline.isNotNull() & t.deadline.isSmallerThanValue(startOfToday))
       ))
         .write(
