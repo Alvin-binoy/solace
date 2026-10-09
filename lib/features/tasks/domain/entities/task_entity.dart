@@ -15,9 +15,10 @@ class TaskEntity extends Equatable {
 
   final DateTime? startTime;
   final DateTime? endTime;
-
-  // NEW: Added for the algorithm
   final int? estimatedDurationMinutes;
+
+  // NEW: Added for the Smart Priority Engine
+  final bool userOverridePriority;
 
   final bool isRecurring;
   final String? recurrenceRule;
@@ -38,6 +39,7 @@ class TaskEntity extends Equatable {
     this.startTime,
     this.endTime,
     this.estimatedDurationMinutes,
+    this.userOverridePriority = false, // NEW
     this.isRecurring = false,
     this.recurrenceRule,
     this.parentTaskId,
@@ -58,6 +60,7 @@ class TaskEntity extends Equatable {
     DateTime? startTime,
     DateTime? endTime,
     int? estimatedDurationMinutes,
+    bool? userOverridePriority, // NEW
     bool? isRecurring,
     String? recurrenceRule,
     String? parentTaskId,
@@ -77,6 +80,7 @@ class TaskEntity extends Equatable {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       estimatedDurationMinutes: estimatedDurationMinutes ?? this.estimatedDurationMinutes,
+      userOverridePriority: userOverridePriority ?? this.userOverridePriority, // NEW
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       parentTaskId: parentTaskId ?? this.parentTaskId,
@@ -90,6 +94,7 @@ class TaskEntity extends Equatable {
   List<Object?> get props => [
     id, title, description, priority, category, status, deadline,
     scheduledAt, startTime, endTime, estimatedDurationMinutes,
+    userOverridePriority, // NEW
     isRecurring, recurrenceRule, parentTaskId, reminderLeadMinutes,
     createdAt, updatedAt,
   ];

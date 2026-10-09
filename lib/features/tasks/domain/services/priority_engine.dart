@@ -15,11 +15,15 @@ class PriorityEngine {
     final result = await _repository.getPendingTasks();
 
     result.fold(
-          (failure) => null, // Silently ignore errors if running in background
+          (failure) => null,
           (tasks) async {
         final now = DateTime.now();
 
         for (var task in tasks) {
+          // NEW: THE "STUBBORN" OVERRIDE CHECK
+          // If the user manually set this priority, we leave it completely alone!
+          if (task.userOverridePriority) continue;
+
           TaskPriority newPriority = task.priority;
 
           // RULE 1: Health tasks should never be lower than Medium
@@ -30,7 +34,7 @@ class PriorityEngine {
           // RULE 2: Stale Tasks - For every 3 days a task sits pending, bump it up 1 priority level
           final daysPending = now.difference(task.createdAt).inDays;
           if (daysPending >= 3) {
-            final bumpLevels = daysPending ~/ 3; // e.g., 3 days = +1 level, 6 days = +2 levels
+            final bumpLevels = daysPending ~/ 3;
             final newIndex = (newPriority.index + bumpLevels).clamp(0, TaskPriority.urgent.index);
             newPriority = TaskPriority.values[newIndex];
           }
@@ -38,7 +42,6 @@ class PriorityEngine {
           // RULE 3: Imminent Deadline - If due in less than 24 hours, force it to URGENT
           if (task.deadline != null) {
             final hoursUntilDeadline = task.deadline!.difference(now).inHours;
-            // If it's due within 24 hours (or already past due but still pending)
             if (hoursUntilDeadline <= 24) {
               newPriority = TaskPriority.urgent;
             }

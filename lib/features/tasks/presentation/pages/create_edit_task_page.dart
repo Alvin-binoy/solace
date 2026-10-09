@@ -29,6 +29,8 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
   TimeOfDay? _endTime;
   DateTime? _deadline;
 
+  bool _userOverridePriority = false; // NEW FLAG
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +42,8 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
 
     _scheduledDate = t?.scheduledAt;
     _deadline = t?.deadline;
+
+    _userOverridePriority = t?.userOverridePriority ?? false; // LOAD FLAG
 
     if (t?.startTime != null) {
       _startTime = TimeOfDay(hour: t!.startTime!.hour, minute: t.startTime!.minute);
@@ -71,7 +75,6 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       return;
     }
 
-    // NEW LOGIC 1: Enforce matching pairs (Both or Neither)
     if ((_startTime != null && _endTime == null) || (_startTime == null && _endTime != null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select both a Start and End time, or leave both empty')),
@@ -79,9 +82,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       return;
     }
 
-    // NEW LOGIC 2: Enforce End Time > Start Time
     if (_startTime != null && _endTime != null) {
-      // Convert to minutes from midnight to easily compare them mathematically
       final startMinutes = (_startTime!.hour * 60) + _startTime!.minute;
       final endMinutes = (_endTime!.hour * 60) + _endTime!.minute;
 
@@ -118,6 +119,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       startTime: finalStartTime,
       endTime: finalEndTime,
       deadline: _deadline,
+      userOverridePriority: _userOverridePriority, // SAVE FLAG
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -161,7 +163,12 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
                       .map((p) => DropdownMenuItem(value: p, child: Text(p.name.toUpperCase())))
                       .toList(),
                   onChanged: (val) {
-                    if (val != null) setState(() => _priority = val);
+                    if (val != null) {
+                      setState(() {
+                        _priority = val;
+                        _userOverridePriority = true; // TRIGGER OVERRIDE FLAG
+                      });
+                    }
                   },
                 ),
               ),
@@ -188,7 +195,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(_scheduledDate == null
-                ? 'Schedule Date' // Removed "Optional"
+                ? 'Schedule Date'
                 : 'Date: ${_scheduledDate.toString().split(' ')[0]}'),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
@@ -210,12 +217,11 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
                       _startTime == null ? 'Start Time (Optional)' : _startTime!.format(context),
                       style: const TextStyle(fontSize: 14)
                   ),
-                  // NEW LOGIC: Show Clock icon if empty, show 'X' button if a time is picked
                   trailing: _startTime == null
                       ? const Icon(Icons.access_time, size: 20)
                       : IconButton(
                     icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => setState(() => _startTime = null), // Clears the time
+                    onPressed: () => setState(() => _startTime = null),
                   ),
                   onTap: () async {
                     if (_scheduledDate == null) {
@@ -240,12 +246,11 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
                       _endTime == null ? 'End Time (Optional)' : _endTime!.format(context),
                       style: const TextStyle(fontSize: 14)
                   ),
-                  // NEW LOGIC: Show Clock icon if empty, show 'X' button if a time is picked
                   trailing: _endTime == null
                       ? const Icon(Icons.access_time, size: 20)
                       : IconButton(
                     icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => setState(() => _endTime = null), // Clears the time
+                    onPressed: () => setState(() => _endTime = null),
                   ),
                   onTap: () async {
                     if (_scheduledDate == null) {

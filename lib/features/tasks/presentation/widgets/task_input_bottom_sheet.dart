@@ -46,10 +46,11 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
   late TaskCategory _category;
 
   int? _reminderLeadMinutes;
-  int? _estimatedDurationMinutes; // NEW: Added for Workload Planner
+  int? _estimatedDurationMinutes;
 
   bool _hasModifiedPriority = false;
   bool _hasModifiedCategory = false;
+  bool _userOverridePriority = false; // NEW FLAG
 
   @override
   void initState() {
@@ -64,8 +65,9 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     _category = t?.category ?? TaskCategory.personal;
 
     _reminderLeadMinutes = t?.reminderLeadMinutes;
-    // Allow it to be null initially so "Not set" shows by default
     _estimatedDurationMinutes = t?.estimatedDurationMinutes;
+
+    _userOverridePriority = t?.userOverridePriority ?? false; // LOAD FLAG
 
     if (t != null) {
       _hasModifiedPriority = true;
@@ -176,6 +178,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       setState(() {
         _priority = picked;
         _hasModifiedPriority = true;
+        _userOverridePriority = true; // TRIGGER OVERRIDE FLAG
       });
     }
   }
@@ -262,7 +265,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     }
   }
 
-  // Helper for duration chip text formatting
   String _formatDuration(int minutes) {
     if (minutes < 60) return '$minutes min';
     final double hours = minutes / 60;
@@ -272,7 +274,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
   void _saveTask() {
     if (_titleController.text.trim().isEmpty) return;
 
-    int? finalDuration = _estimatedDurationMinutes; // Default to the dropdown value
+    int? finalDuration = _estimatedDurationMinutes;
 
     if (_startTime != null && _endTime != null) {
       final startMins = (_startTime!.hour * 60) + _startTime!.minute;
@@ -282,10 +284,8 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
         _showSmartMessage('End Time must be after Start Time');
         return;
       }
-      // Auto-calculate the duration if they picked exact times
       finalDuration = endMins - startMins;
     } else if (_scheduledDate != null && finalDuration == null) {
-      // NEW LOGIC: Title + Date but no duration set? Silently default to 30 mins
       finalDuration = 30;
     }
 
@@ -320,7 +320,8 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       deadline: _scheduledDate,
       startTime: finalStartTime,
       endTime: finalEndTime,
-      estimatedDurationMinutes: finalDuration, // Uses the auto-calculated or dropdown value
+      estimatedDurationMinutes: finalDuration,
+      userOverridePriority: _userOverridePriority, // SAVE FLAG
       reminderLeadMinutes: _reminderLeadMinutes,
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
@@ -401,6 +402,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                   onDeleted: () => setState(() {
                     _priority = TaskPriority.medium;
                     _hasModifiedPriority = false;
+                    _userOverridePriority = false; // RESET FLAG
                   }),
                 ),
               if (_hasModifiedCategory || _category != TaskCategory.personal)
@@ -478,7 +480,6 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
             ],
           ),
 
-          // ONLY show the Estimate Dropdown if they HAVEN'T picked exact times
           if (_startTime == null && _endTime == null) ...[
             const Divider(),
             Padding(

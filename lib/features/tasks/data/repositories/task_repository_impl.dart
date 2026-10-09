@@ -25,7 +25,8 @@ class TaskRepositoryImpl implements TaskRepository {
       scheduledAt: model.scheduledAt,
       startTime: model.startTime,
       endTime: model.endTime,
-      estimatedDurationMinutes: model.estimatedDurationMinutes, // NEW
+      estimatedDurationMinutes: model.estimatedDurationMinutes,
+      userOverridePriority: model.userOverridePriority, // NEW
       isRecurring: model.isRecurring,
       recurrenceRule: model.recurrenceRule,
       parentTaskId: model.parentTaskId,
@@ -47,7 +48,8 @@ class TaskRepositoryImpl implements TaskRepository {
       scheduledAt: Value(entity.scheduledAt),
       startTime: Value(entity.startTime),
       endTime: Value(entity.endTime),
-      estimatedDurationMinutes: Value(entity.estimatedDurationMinutes), // NEW
+      estimatedDurationMinutes: Value(entity.estimatedDurationMinutes),
+      userOverridePriority: Value(entity.userOverridePriority), // NEW
       isRecurring: Value(entity.isRecurring),
       recurrenceRule: Value(entity.recurrenceRule),
       parentTaskId: Value(entity.parentTaskId),

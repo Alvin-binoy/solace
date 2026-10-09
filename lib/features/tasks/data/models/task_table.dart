@@ -11,17 +11,15 @@ class Tasks extends Table {
   TextColumn get category => textEnum<TaskCategory>()();
   TextColumn get status => textEnum<TaskStatus>()();
 
-  // The general date the task is scheduled for
   DateTimeColumn get scheduledAt => dateTime().nullable()();
-
-  // Time-blocking fields
   DateTimeColumn get startTime => dateTime().nullable()();
   DateTimeColumn get endTime => dateTime().nullable()();
-
-  // NEW: Added for the Daily Workload Planner Algorithm
   IntColumn get estimatedDurationMinutes => integer().nullable()();
-
   DateTimeColumn get deadline => dateTime().nullable()();
+
+  // NEW: User Override Flag!
+  BoolColumn get userOverridePriority => boolean().withDefault(const Constant(false))();
+
   BoolColumn get isRecurring => boolean().withDefault(const Constant(false))();
   TextColumn get recurrenceRule => text().nullable()();
   TextColumn get parentTaskId => text().nullable()();

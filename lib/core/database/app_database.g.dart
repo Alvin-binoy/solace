@@ -123,6 +123,20 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _userOverridePriorityMeta =
+      const VerificationMeta('userOverridePriority');
+  @override
+  late final GeneratedColumn<bool> userOverridePriority = GeneratedColumn<bool>(
+    'user_override_priority',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("user_override_priority" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _isRecurringMeta = const VerificationMeta(
     'isRecurring',
   );
@@ -205,6 +219,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     endTime,
     estimatedDurationMinutes,
     deadline,
+    userOverridePriority,
     isRecurring,
     recurrenceRule,
     parentTaskId,
@@ -280,6 +295,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       context.handle(
         _deadlineMeta,
         deadline.isAcceptableOrUnknown(data['deadline']!, _deadlineMeta),
+      );
+    }
+    if (data.containsKey('user_override_priority')) {
+      context.handle(
+        _userOverridePriorityMeta,
+        userOverridePriority.isAcceptableOrUnknown(
+          data['user_override_priority']!,
+          _userOverridePriorityMeta,
+        ),
       );
     }
     if (data.containsKey('is_recurring')) {
@@ -391,6 +415,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}deadline'],
       ),
+      userOverridePriority: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}user_override_priority'],
+      )!,
       isRecurring: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_recurring'],
@@ -443,6 +471,7 @@ class Task extends DataClass implements Insertable<Task> {
   final DateTime? endTime;
   final int? estimatedDurationMinutes;
   final DateTime? deadline;
+  final bool userOverridePriority;
   final bool isRecurring;
   final String? recurrenceRule;
   final String? parentTaskId;
@@ -461,6 +490,7 @@ class Task extends DataClass implements Insertable<Task> {
     this.endTime,
     this.estimatedDurationMinutes,
     this.deadline,
+    required this.userOverridePriority,
     required this.isRecurring,
     this.recurrenceRule,
     this.parentTaskId,
@@ -508,6 +538,7 @@ class Task extends DataClass implements Insertable<Task> {
     if (!nullToAbsent || deadline != null) {
       map['deadline'] = Variable<DateTime>(deadline);
     }
+    map['user_override_priority'] = Variable<bool>(userOverridePriority);
     map['is_recurring'] = Variable<bool>(isRecurring);
     if (!nullToAbsent || recurrenceRule != null) {
       map['recurrence_rule'] = Variable<String>(recurrenceRule);
@@ -550,6 +581,7 @@ class Task extends DataClass implements Insertable<Task> {
       deadline: deadline == null && nullToAbsent
           ? const Value.absent()
           : Value(deadline),
+      userOverridePriority: Value(userOverridePriority),
       isRecurring: Value(isRecurring),
       recurrenceRule: recurrenceRule == null && nullToAbsent
           ? const Value.absent()
@@ -592,6 +624,9 @@ class Task extends DataClass implements Insertable<Task> {
         json['estimatedDurationMinutes'],
       ),
       deadline: serializer.fromJson<DateTime?>(json['deadline']),
+      userOverridePriority: serializer.fromJson<bool>(
+        json['userOverridePriority'],
+      ),
       isRecurring: serializer.fromJson<bool>(json['isRecurring']),
       recurrenceRule: serializer.fromJson<String?>(json['recurrenceRule']),
       parentTaskId: serializer.fromJson<String?>(json['parentTaskId']),
@@ -625,6 +660,7 @@ class Task extends DataClass implements Insertable<Task> {
         estimatedDurationMinutes,
       ),
       'deadline': serializer.toJson<DateTime?>(deadline),
+      'userOverridePriority': serializer.toJson<bool>(userOverridePriority),
       'isRecurring': serializer.toJson<bool>(isRecurring),
       'recurrenceRule': serializer.toJson<String?>(recurrenceRule),
       'parentTaskId': serializer.toJson<String?>(parentTaskId),
@@ -646,6 +682,7 @@ class Task extends DataClass implements Insertable<Task> {
     Value<DateTime?> endTime = const Value.absent(),
     Value<int?> estimatedDurationMinutes = const Value.absent(),
     Value<DateTime?> deadline = const Value.absent(),
+    bool? userOverridePriority,
     bool? isRecurring,
     Value<String?> recurrenceRule = const Value.absent(),
     Value<String?> parentTaskId = const Value.absent(),
@@ -666,6 +703,7 @@ class Task extends DataClass implements Insertable<Task> {
         ? estimatedDurationMinutes.value
         : this.estimatedDurationMinutes,
     deadline: deadline.present ? deadline.value : this.deadline,
+    userOverridePriority: userOverridePriority ?? this.userOverridePriority,
     isRecurring: isRecurring ?? this.isRecurring,
     recurrenceRule: recurrenceRule.present
         ? recurrenceRule.value
@@ -696,6 +734,9 @@ class Task extends DataClass implements Insertable<Task> {
           ? data.estimatedDurationMinutes.value
           : this.estimatedDurationMinutes,
       deadline: data.deadline.present ? data.deadline.value : this.deadline,
+      userOverridePriority: data.userOverridePriority.present
+          ? data.userOverridePriority.value
+          : this.userOverridePriority,
       isRecurring: data.isRecurring.present
           ? data.isRecurring.value
           : this.isRecurring,
@@ -727,6 +768,7 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('endTime: $endTime, ')
           ..write('estimatedDurationMinutes: $estimatedDurationMinutes, ')
           ..write('deadline: $deadline, ')
+          ..write('userOverridePriority: $userOverridePriority, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
           ..write('parentTaskId: $parentTaskId, ')
@@ -750,6 +792,7 @@ class Task extends DataClass implements Insertable<Task> {
     endTime,
     estimatedDurationMinutes,
     deadline,
+    userOverridePriority,
     isRecurring,
     recurrenceRule,
     parentTaskId,
@@ -772,6 +815,7 @@ class Task extends DataClass implements Insertable<Task> {
           other.endTime == this.endTime &&
           other.estimatedDurationMinutes == this.estimatedDurationMinutes &&
           other.deadline == this.deadline &&
+          other.userOverridePriority == this.userOverridePriority &&
           other.isRecurring == this.isRecurring &&
           other.recurrenceRule == this.recurrenceRule &&
           other.parentTaskId == this.parentTaskId &&
@@ -792,6 +836,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<DateTime?> endTime;
   final Value<int?> estimatedDurationMinutes;
   final Value<DateTime?> deadline;
+  final Value<bool> userOverridePriority;
   final Value<bool> isRecurring;
   final Value<String?> recurrenceRule;
   final Value<String?> parentTaskId;
@@ -811,6 +856,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.endTime = const Value.absent(),
     this.estimatedDurationMinutes = const Value.absent(),
     this.deadline = const Value.absent(),
+    this.userOverridePriority = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
     this.parentTaskId = const Value.absent(),
@@ -831,6 +877,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.endTime = const Value.absent(),
     this.estimatedDurationMinutes = const Value.absent(),
     this.deadline = const Value.absent(),
+    this.userOverridePriority = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
     this.parentTaskId = const Value.absent(),
@@ -856,6 +903,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<DateTime>? endTime,
     Expression<int>? estimatedDurationMinutes,
     Expression<DateTime>? deadline,
+    Expression<bool>? userOverridePriority,
     Expression<bool>? isRecurring,
     Expression<String>? recurrenceRule,
     Expression<String>? parentTaskId,
@@ -877,6 +925,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (estimatedDurationMinutes != null)
         'estimated_duration_minutes': estimatedDurationMinutes,
       if (deadline != null) 'deadline': deadline,
+      if (userOverridePriority != null)
+        'user_override_priority': userOverridePriority,
       if (isRecurring != null) 'is_recurring': isRecurring,
       if (recurrenceRule != null) 'recurrence_rule': recurrenceRule,
       if (parentTaskId != null) 'parent_task_id': parentTaskId,
@@ -900,6 +950,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<DateTime?>? endTime,
     Value<int?>? estimatedDurationMinutes,
     Value<DateTime?>? deadline,
+    Value<bool>? userOverridePriority,
     Value<bool>? isRecurring,
     Value<String?>? recurrenceRule,
     Value<String?>? parentTaskId,
@@ -921,6 +972,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       estimatedDurationMinutes:
           estimatedDurationMinutes ?? this.estimatedDurationMinutes,
       deadline: deadline ?? this.deadline,
+      userOverridePriority: userOverridePriority ?? this.userOverridePriority,
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       parentTaskId: parentTaskId ?? this.parentTaskId,
@@ -975,6 +1027,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (deadline.present) {
       map['deadline'] = Variable<DateTime>(deadline.value);
     }
+    if (userOverridePriority.present) {
+      map['user_override_priority'] = Variable<bool>(
+        userOverridePriority.value,
+      );
+    }
     if (isRecurring.present) {
       map['is_recurring'] = Variable<bool>(isRecurring.value);
     }
@@ -1013,6 +1070,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('endTime: $endTime, ')
           ..write('estimatedDurationMinutes: $estimatedDurationMinutes, ')
           ..write('deadline: $deadline, ')
+          ..write('userOverridePriority: $userOverridePriority, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
           ..write('parentTaskId: $parentTaskId, ')
@@ -2475,6 +2533,7 @@ typedef $$TasksTableCreateCompanionBuilder =
       Value<DateTime?> endTime,
       Value<int?> estimatedDurationMinutes,
       Value<DateTime?> deadline,
+      Value<bool> userOverridePriority,
       Value<bool> isRecurring,
       Value<String?> recurrenceRule,
       Value<String?> parentTaskId,
@@ -2496,6 +2555,7 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<DateTime?> endTime,
       Value<int?> estimatedDurationMinutes,
       Value<DateTime?> deadline,
+      Value<bool> userOverridePriority,
       Value<bool> isRecurring,
       Value<String?> recurrenceRule,
       Value<String?> parentTaskId,
@@ -2568,6 +2628,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<DateTime> get deadline => $composableBuilder(
     column: $table.deadline,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get userOverridePriority => $composableBuilder(
+    column: $table.userOverridePriority,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2666,6 +2731,11 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get userOverridePriority => $composableBuilder(
+    column: $table.userOverridePriority,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isRecurring => $composableBuilder(
     column: $table.isRecurring,
     builder: (column) => ColumnOrderings(column),
@@ -2745,6 +2815,11 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<DateTime> get deadline =>
       $composableBuilder(column: $table.deadline, builder: (column) => column);
 
+  GeneratedColumn<bool> get userOverridePriority => $composableBuilder(
+    column: $table.userOverridePriority,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isRecurring => $composableBuilder(
     column: $table.isRecurring,
     builder: (column) => column,
@@ -2811,6 +2886,7 @@ class $$TasksTableTableManager
                 Value<DateTime?> endTime = const Value.absent(),
                 Value<int?> estimatedDurationMinutes = const Value.absent(),
                 Value<DateTime?> deadline = const Value.absent(),
+                Value<bool> userOverridePriority = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
                 Value<String?> parentTaskId = const Value.absent(),
@@ -2830,6 +2906,7 @@ class $$TasksTableTableManager
                 endTime: endTime,
                 estimatedDurationMinutes: estimatedDurationMinutes,
                 deadline: deadline,
+                userOverridePriority: userOverridePriority,
                 isRecurring: isRecurring,
                 recurrenceRule: recurrenceRule,
                 parentTaskId: parentTaskId,
@@ -2851,6 +2928,7 @@ class $$TasksTableTableManager
                 Value<DateTime?> endTime = const Value.absent(),
                 Value<int?> estimatedDurationMinutes = const Value.absent(),
                 Value<DateTime?> deadline = const Value.absent(),
+                Value<bool> userOverridePriority = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
                 Value<String?> parentTaskId = const Value.absent(),
@@ -2870,6 +2948,7 @@ class $$TasksTableTableManager
                 endTime: endTime,
                 estimatedDurationMinutes: estimatedDurationMinutes,
                 deadline: deadline,
+                userOverridePriority: userOverridePriority,
                 isRecurring: isRecurring,
                 recurrenceRule: recurrenceRule,
                 parentTaskId: parentTaskId,
