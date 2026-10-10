@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/enums/task_category.dart';
 import '../../../../core/enums/task_priority.dart';
@@ -29,7 +30,10 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
   TimeOfDay? _endTime;
   DateTime? _deadline;
 
-  bool _userOverridePriority = false; // NEW FLAG
+  bool _userOverridePriority = false;
+
+  // NEW: Recurring Task State
+  String? _recurrenceRule;
 
   @override
   void initState() {
@@ -43,7 +47,10 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
     _scheduledDate = t?.scheduledAt;
     _deadline = t?.deadline;
 
-    _userOverridePriority = t?.userOverridePriority ?? false; // LOAD FLAG
+    _userOverridePriority = t?.userOverridePriority ?? false;
+
+    // NEW: Load existing rule if editing
+    _recurrenceRule = t?.recurrenceRule;
 
     if (t?.startTime != null) {
       _startTime = TimeOfDay(hour: t!.startTime!.hour, minute: t.startTime!.minute);
@@ -60,25 +67,92 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
     super.dispose();
   }
 
+  void _showSmartMessage(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blueAccent),
+            SizedBox(width: 8),
+            Text('Hold on'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEW: The Recurrence Picker Dialog
+  void _pickRecurrence() async {
+    if (_scheduledDate == null) {
+      _showSmartMessage('Please set a Schedule Date first.');
+      return;
+    }
+
+    final Map<String?, String> options = {
+      null: "Does not repeat",
+      "FREQ=DAILY": "Daily",
+      "FREQ=WEEKLY": "Weekly",
+      "FREQ=MONTHLY": "Monthly"
+    };
+
+    await showDialog(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Repeat Task'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        children: options.entries.map((entry) => SimpleDialogOption(
+          onPressed: () {
+            setState(() {
+              _recurrenceRule = entry.key;
+            });
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(entry.value, style: const TextStyle(fontSize: 16)),
+                if (_recurrenceRule == entry.key) const Icon(Icons.check, color: Colors.blueAccent),
+              ],
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  String _getRecurrenceText() {
+    switch (_recurrenceRule) {
+      case 'FREQ=DAILY': return 'Daily';
+      case 'FREQ=WEEKLY': return 'Weekly';
+      case 'FREQ=MONTHLY': return 'Monthly';
+      default: return '';
+    }
+  }
+
   void _saveTask() {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title is required')),
-      );
+      _showSmartMessage('Title is required');
       return;
     }
 
     if (_scheduledDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a Schedule Date')),
-      );
+      _showSmartMessage('Please select a Schedule Date');
       return;
     }
 
     if ((_startTime != null && _endTime == null) || (_startTime == null && _endTime != null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select both a Start and End time, or leave both empty')),
-      );
+      _showSmartMessage('Please select both a Start and End time, or leave both empty');
       return;
     }
 
@@ -87,9 +161,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       final endMinutes = (_endTime!.hour * 60) + _endTime!.minute;
 
       if (endMinutes <= startMinutes) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('End Time must be after the Start Time')),
-        );
+        _showSmartMessage('End Time must be after the Start Time');
         return;
       }
     }
@@ -119,7 +191,9 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
       startTime: finalStartTime,
       endTime: finalEndTime,
       deadline: _deadline,
-      userOverridePriority: _userOverridePriority, // SAVE FLAG
+      userOverridePriority: _userOverridePriority,
+      isRecurring: _recurrenceRule != null, // NEW: Saves recurring state
+      recurrenceRule: _recurrenceRule,      // NEW: Saves the RRULE string
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -166,7 +240,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
                     if (val != null) {
                       setState(() {
                         _priority = val;
-                        _userOverridePriority = true; // TRIGGER OVERRIDE FLAG
+                        _userOverridePriority = true;
                       });
                     }
                   },
@@ -205,9 +279,29 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
               );
-              if (picked != null) setState(() => _scheduledDate = picked);
+              if (picked != null) {
+                setState(() => _scheduledDate = picked);
+              }
             },
           ),
+
+          // NEW: The Recurring Option in the main menu
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              _recurrenceRule == null ? 'Repeat Task' : 'Repeats: ${_getRecurrenceText()}',
+              style: TextStyle(
+                color: _recurrenceRule == null ? Theme.of(context).colorScheme.onSurface : Colors.blueAccent,
+                fontWeight: _recurrenceRule == null ? FontWeight.normal : FontWeight.bold,
+              ),
+            ),
+            trailing: Icon(
+              _recurrenceRule == null ? Icons.repeat : Icons.repeat_on,
+              color: _recurrenceRule == null ? Colors.grey : Colors.blueAccent,
+            ),
+            onTap: _pickRecurrence,
+          ),
+
           Row(
             children: [
               Expanded(
@@ -225,9 +319,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
                   ),
                   onTap: () async {
                     if (_scheduledDate == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select a Schedule Date first')),
-                      );
+                      _showSmartMessage('Please select a Schedule Date first');
                       return;
                     }
                     final picked = await showTimePicker(
@@ -254,9 +346,7 @@ class _CreateEditTaskPageState extends State<CreateEditTaskPage> {
                   ),
                   onTap: () async {
                     if (_scheduledDate == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select a Schedule Date first')),
-                      );
+                      _showSmartMessage('Please select a Schedule Date first');
                       return;
                     }
                     final picked = await showTimePicker(

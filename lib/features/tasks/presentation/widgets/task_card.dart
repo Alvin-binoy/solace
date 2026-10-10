@@ -30,6 +30,14 @@ class TaskCard extends StatelessWidget {
   return text;
  }
 
+ // NEW: Helper to convert the RRULE string to clean UI text
+ String _getRecurrenceText(String rule) {
+  if (rule.contains('FREQ=DAILY')) return 'Daily';
+  if (rule.contains('FREQ=WEEKLY')) return 'Weekly';
+  if (rule.contains('FREQ=MONTHLY')) return 'Monthly';
+  return 'Repeats';
+ }
+
  @override
  Widget build(BuildContext context) {
   final isCompleted = task.status == TaskStatus.completed;
@@ -95,26 +103,47 @@ class TaskCard extends StatelessWidget {
             ],
             if (scheduleText != null) ...[
              const SizedBox(height: 4),
-             Row(
+             // EDGE CASE FIX: Using Wrap so it never overflows off the screen!
+             Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6, // Horizontal space between elements
+              runSpacing: 4, // Vertical space if it wraps to a new line
               children: [
-               Icon(
-                   Icons.schedule,
-                   size: 12,
-                   color: mutedTextColor // Back to normal
+               Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                 Icon(Icons.schedule, size: 12, color: mutedTextColor),
+                 const SizedBox(width: 4),
+                 Text(
+                  scheduleText,
+                  style: TextStyle(
+                   fontSize: 11,
+                   fontWeight: FontWeight.w600,
+                   color: mutedTextColor,
+                  ),
+                 ),
+                ],
                ),
-               const SizedBox(width: 4),
-               Text(
-                scheduleText,
-                style: TextStyle(
-                 fontSize: 11,
-                 fontWeight: FontWeight.w600,
-                 color: mutedTextColor, // Back to normal
-                ),
-               ),
-               if (task.reminderLeadMinutes != null && !isCompleted) ...[
-                const SizedBox(width: 6),
+               if (task.reminderLeadMinutes != null && !isCompleted)
                 const Icon(Icons.notifications_active, size: 12, color: Colors.purple),
-               ],
+
+               // NEW: Repeating Task Badge!
+               if (task.recurrenceRule != null)
+                Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                  const Icon(Icons.repeat, size: 12, color: Colors.blueAccent),
+                  const SizedBox(width: 2),
+                  Text(
+                   _getRecurrenceText(task.recurrenceRule!),
+                   style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blueAccent,
+                   ),
+                  ),
+                 ],
+                ),
               ],
              ),
             ],

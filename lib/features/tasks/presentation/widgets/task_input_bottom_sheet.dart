@@ -50,7 +50,10 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
 
   bool _hasModifiedPriority = false;
   bool _hasModifiedCategory = false;
-  bool _userOverridePriority = false; // NEW FLAG
+  bool _userOverridePriority = false;
+
+  // NEW: Recurring Task State
+  String? _recurrenceRule;
 
   @override
   void initState() {
@@ -67,7 +70,10 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     _reminderLeadMinutes = t?.reminderLeadMinutes;
     _estimatedDurationMinutes = t?.estimatedDurationMinutes;
 
-    _userOverridePriority = t?.userOverridePriority ?? false; // LOAD FLAG
+    _userOverridePriority = t?.userOverridePriority ?? false;
+
+    // NEW: Load existing rule if editing
+    _recurrenceRule = t?.recurrenceRule;
 
     if (t != null) {
       _hasModifiedPriority = true;
@@ -90,18 +96,24 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
   }
 
   void _showSmartMessage(String message) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          left: 16,
-          right: 16,
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blueAccent),
+            SizedBox(width: 8),
+            Text('Hold on'),
+          ],
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -178,7 +190,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       setState(() {
         _priority = picked;
         _hasModifiedPriority = true;
-        _userOverridePriority = true; // TRIGGER OVERRIDE FLAG
+        _userOverridePriority = true;
       });
     }
   }
@@ -254,6 +266,47 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
     );
   }
 
+  // NEW: The Recurrence Picker Dialog
+  void _pickRecurrence() async {
+    if (_scheduledDate == null) {
+      _showSmartMessage('Please set a Schedule Date first.');
+      return;
+    }
+
+    final Map<String?, String> options = {
+      null: "Does not repeat",
+      "FREQ=DAILY": "Daily",
+      "FREQ=WEEKLY": "Weekly",
+      "FREQ=MONTHLY": "Monthly"
+    };
+
+    await showDialog(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Repeat Task'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        children: options.entries.map((entry) => SimpleDialogOption(
+          onPressed: () {
+            setState(() {
+              _recurrenceRule = entry.key;
+            });
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(entry.value, style: const TextStyle(fontSize: 16)),
+                if (_recurrenceRule == entry.key) const Icon(Icons.check, color: Colors.blueAccent),
+              ],
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
   String _getReminderText() {
     switch (_reminderLeadMinutes) {
       case 0: return 'At time of task';
@@ -261,6 +314,16 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       case 15: return '15 min before';
       case 30: return '30 min before';
       case 60: return '1 hour before';
+      default: return '';
+    }
+  }
+
+  // NEW: Helper to format the repeating chip text
+  String _getRecurrenceText() {
+    switch (_recurrenceRule) {
+      case 'FREQ=DAILY': return 'Daily';
+      case 'FREQ=WEEKLY': return 'Weekly';
+      case 'FREQ=MONTHLY': return 'Monthly';
       default: return '';
     }
   }
@@ -321,7 +384,9 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
       startTime: finalStartTime,
       endTime: finalEndTime,
       estimatedDurationMinutes: finalDuration,
-      userOverridePriority: _userOverridePriority, // SAVE FLAG
+      userOverridePriority: _userOverridePriority,
+      isRecurring: _recurrenceRule != null, // NEW: Flips to true if rule exists
+      recurrenceRule: _recurrenceRule,      // NEW: Saves the string
       reminderLeadMinutes: _reminderLeadMinutes,
       createdAt: isEditing ? widget.existingTask!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
@@ -383,6 +448,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                     _startTime = null;
                     _endTime = null;
                     _reminderLeadMinutes = null;
+                    _recurrenceRule = null; // Also clear recurring if date is deleted
                   }),
                 ),
               if (_startTime != null && _endTime != null)
@@ -402,7 +468,7 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                   onDeleted: () => setState(() {
                     _priority = TaskPriority.medium;
                     _hasModifiedPriority = false;
-                    _userOverridePriority = false; // RESET FLAG
+                    _userOverridePriority = false;
                   }),
                 ),
               if (_hasModifiedCategory || _category != TaskCategory.personal)
@@ -432,47 +498,76 @@ class _TaskInputBottomSheetState extends State<TaskInputBottomSheet> {
                     _reminderLeadMinutes = null;
                   }),
                 ),
+              // NEW: The Repeating Tag Chip
+              if (_recurrenceRule != null)
+                InputChip(
+                  avatar: const Icon(Icons.repeat, size: 16, color: Colors.blueAccent),
+                  label: Text(_getRecurrenceText()),
+                  onPressed: _pickRecurrence,
+                  onDeleted: () => setState(() {
+                    _recurrenceRule = null;
+                  }),
+                ),
             ],
           ),
 
           const SizedBox(height: 8),
 
+          // Icon Toolbar
           Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.notes),
-                tooltip: 'Add details',
-                onPressed: () => setState(() => _showDescription = !_showDescription),
-              ),
-              IconButton(
-                icon: const Icon(Icons.calendar_month),
-                tooltip: 'Set date',
-                onPressed: _pickDate,
-              ),
-              IconButton(
-                icon: const Icon(Icons.access_time),
-                tooltip: 'Set time block',
-                onPressed: _pickTime,
-              ),
-              IconButton(
-                icon: Icon(Icons.flag_outlined, color: _priority != TaskPriority.medium ? Colors.deepOrange : null),
-                tooltip: 'Set Priority',
-                onPressed: _pickPriority,
-              ),
-              IconButton(
-                icon: Icon(Icons.folder_outlined, color: _category != TaskCategory.personal ? Colors.blue : null),
-                tooltip: 'Set Category',
-                onPressed: _pickCategory,
-              ),
-              IconButton(
-                icon: Icon(
-                    _reminderLeadMinutes != null ? Icons.notifications_active : Icons.notifications_none,
-                    color: _reminderLeadMinutes != null ? Colors.purple : null
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notes),
+                        tooltip: 'Add details',
+                        onPressed: () => setState(() => _showDescription = !_showDescription),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.calendar_month),
+                        tooltip: 'Set date',
+                        onPressed: _pickDate,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.access_time),
+                        tooltip: 'Set time block',
+                        onPressed: _pickTime,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.flag_outlined, color: _priority != TaskPriority.medium ? Colors.deepOrange : null),
+                        tooltip: 'Set Priority',
+                        onPressed: _pickPriority,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.folder_outlined, color: _category != TaskCategory.personal ? Colors.blue : null),
+                        tooltip: 'Set Category',
+                        onPressed: _pickCategory,
+                      ),
+                      IconButton(
+                        icon: Icon(
+                            _reminderLeadMinutes != null ? Icons.notifications_active : Icons.notifications_none,
+                            color: _reminderLeadMinutes != null ? Colors.purple : null
+                        ),
+                        tooltip: 'Set Reminder',
+                        onPressed: _pickReminderSafe,
+                      ),
+                      // NEW: Repeat button
+                      IconButton(
+                        icon: Icon(
+                            _recurrenceRule != null ? Icons.repeat_on : Icons.repeat,
+                            color: _recurrenceRule != null ? Colors.blueAccent : null
+                        ),
+                        tooltip: 'Repeat Task',
+                        onPressed: _pickRecurrence,
+                      ),
+                    ],
+                  ),
                 ),
-                tooltip: 'Set Reminder',
-                onPressed: _pickReminderSafe,
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               TextButton(
                 onPressed: _saveTask,
                 child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
